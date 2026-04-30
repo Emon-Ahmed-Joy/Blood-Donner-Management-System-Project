@@ -7,7 +7,7 @@ import javax.swing.*;
 import model.Donor;
 
 /**
- * Admin Dashboard to manage donors and view requests.
+ * Admin Dashboard with Animated Background.
  */
 public class AdminPage extends JFrame {
     private JTextArea donorStatsArea;
@@ -18,30 +18,35 @@ public class AdminPage extends JFrame {
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
 
+        // Animated Background
+        GradientPanel bgPanel = new GradientPanel();
+        
+        // Main Content Card
+        JPanel card = GradientPanel.createCard(1100, 600);
+        
         // Header
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(50, 50, 50));
         JLabel headerLabel = new JLabel("Admin Control Panel", SwingConstants.CENTER);
-        headerLabel.setForeground(Color.WHITE);
-        headerLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
-        headerPanel.add(headerLabel);
-        add(headerPanel, BorderLayout.NORTH);
+        headerLabel.setForeground(new Color(180, 0, 0));
+        headerLabel.setFont(new Font("SansSerif", Font.BOLD, 28));
+        card.add(headerLabel, BorderLayout.NORTH);
 
-        // Center Content: Stats and Requests
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Center Content
+        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 20));
+        centerPanel.setOpaque(false);
 
         // Donor Stats Section
         JPanel statsPanel = new JPanel(new BorderLayout());
+        statsPanel.setOpaque(false);
         statsPanel.setBorder(BorderFactory.createTitledBorder("Donor Status & Details"));
         donorStatsArea = new JTextArea();
         donorStatsArea.setEditable(false);
+        donorStatsArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
         statsPanel.add(new JScrollPane(donorStatsArea), BorderLayout.CENTER);
 
         // Requests Section
         JPanel requestsPanel = new JPanel(new BorderLayout());
+        requestsPanel.setOpaque(false);
         requestsPanel.setBorder(BorderFactory.createTitledBorder("Active Blood Requests"));
         requestsArea = new JTextArea("No pending blood requests.");
         requestsArea.setEditable(false);
@@ -49,15 +54,16 @@ public class AdminPage extends JFrame {
 
         centerPanel.add(statsPanel);
         centerPanel.add(requestsPanel);
-        add(centerPanel, BorderLayout.CENTER);
+        card.add(centerPanel, BorderLayout.CENTER);
 
         // Bottom: Controls
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        controlPanel.setOpaque(false);
         JButton refreshBtn = new JButton("Refresh Data");
         JButton logoutBtn = new JButton("Logout");
         controlPanel.add(refreshBtn);
         controlPanel.add(logoutBtn);
-        add(controlPanel, BorderLayout.SOUTH);
+        card.add(controlPanel, BorderLayout.SOUTH);
 
         // Actions
         refreshBtn.addActionListener(e -> refreshData());
@@ -66,25 +72,24 @@ public class AdminPage extends JFrame {
             this.dispose();
         });
 
+        bgPanel.add(card);
+        add(bgPanel);
         refreshData();
     }
 
     private void refreshData() {
         donorStatsArea.setText("");
         List<Donor> donors = DataStore.donors;
-        
         int activeCount = 0;
         int busyCount = 0;
 
         donorStatsArea.append("TOTAL DONORS: " + donors.size() + "\n");
         donorStatsArea.append("-----------------------------\n");
-
         for (Donor d : donors) {
             if (d.isAvailable()) activeCount++;
             else busyCount++;
             donorStatsArea.append(d.toString() + "\n");
         }
-
         donorStatsArea.append("\nSUMMARY:\n");
         donorStatsArea.append("Available: " + activeCount + "\n");
         donorStatsArea.append("Busy: " + busyCount + "\n");

@@ -3,31 +3,30 @@ package ui;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import javax.swing.*;
 
 /**
- * Custom panel with an animated blood-donor themed background.
- * Simulates slowly floating blood cells/drops.
+ * High-performance animated background panel.
+ * Uses sub-pixel rendering for ultra-smooth movement.
  */
 public class GradientPanel extends JPanel {
     private List<Particle> particles;
     private Timer timer;
-    private final int PARTICLE_COUNT = 25;
+    private final int PARTICLE_COUNT = 30;
 
     public GradientPanel() {
-        setLayout(new BorderLayout());
+        setDoubleBuffered(true);
+        setLayout(new GridBagLayout()); // Default to centered layout
         initParticles();
         
-        // Animation Timer (60 FPS approx)
-        timer = new Timer(16, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateParticles();
-                repaint();
-            }
+        // 60 FPS Animation
+        timer = new Timer(16, e -> {
+            updateParticles();
+            repaint();
         });
         timer.start();
     }
@@ -37,10 +36,10 @@ public class GradientPanel extends JPanel {
         Random rand = new Random();
         for (int i = 0; i < PARTICLE_COUNT; i++) {
             particles.add(new Particle(
-                rand.nextInt(1280), 
-                rand.nextInt(720), 
-                rand.nextInt(40) + 10, 
-                rand.nextFloat() * 0.5f + 0.2f
+                rand.nextInt(1920), 
+                rand.nextInt(1080), 
+                rand.nextInt(50) + 20, 
+                rand.nextFloat() * 0.4f + 0.1f
             ));
         }
     }
@@ -55,45 +54,49 @@ public class GradientPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
+        
+        // High quality rendering hints
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
-        // Static Gradient Background
-        GradientPaint gp = new GradientPaint(0, 0, new Color(150, 0, 0), 0, getHeight(), new Color(255, 240, 240));
+        // Background Gradient
+        GradientPaint gp = new GradientPaint(0, 0, new Color(140, 0, 0), 0, getHeight(), new Color(255, 245, 245));
         g2d.setPaint(gp);
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
-        // Draw Animated Particles
+        // Draw Animated Particles with sub-pixel precision
         for (Particle p : particles) {
-            g2d.setColor(new Color(255, 255, 255, 30)); // Subtle white "glow"
-            g2d.fillOval((int)p.x, (int)p.y, p.radius, p.radius);
+            // Shadow/Glow
+            g2d.setColor(new Color(255, 255, 255, 15));
+            g2d.fill(new Ellipse2D.Double(p.x, p.y, p.radius, p.radius));
             
-            g2d.setColor(new Color(200, 0, 0, 20)); // Subtle red shadow
-            g2d.fillOval((int)p.x + 2, (int)p.y + 2, p.radius, p.radius);
+            // Core
+            g2d.setColor(new Color(180, 0, 0, 10));
+            g2d.fill(new Ellipse2D.Double(p.x + 2, p.y + 2, p.radius * 0.8, p.radius * 0.8));
         }
+
+        // Essential for smooth animation on some systems (Linux/Windows)
+        Toolkit.getDefaultToolkit().sync();
     }
 
-    // Helper class for background particles
     private static class Particle {
-        float x, y;
-        int radius;
-        float speed;
-        float dx, dy;
+        double x, y;
+        double radius;
+        double dx, dy;
 
-        Particle(float x, float y, int radius, float speed) {
+        Particle(double x, double y, double radius, double speed) {
             this.x = x;
             this.y = y;
             this.radius = radius;
-            this.speed = speed;
             Random rand = new Random();
-            this.dx = (rand.nextFloat() - 0.5f) * speed;
-            this.dy = (rand.nextFloat() - 0.5f) * speed;
+            this.dx = (rand.nextDouble() - 0.5) * speed;
+            this.dy = (rand.nextDouble() - 0.5) * speed;
         }
 
         void move(int width, int height) {
             x += dx;
             y += dy;
-
-            // Screen wrap
             if (x < -radius) x = width;
             if (x > width) x = -radius;
             if (y < -radius) y = height;
@@ -101,8 +104,17 @@ public class GradientPanel extends JPanel {
         }
     }
 
-    // Call this to stop animation if needed (performance)
-    public void stopAnimation() {
-        if (timer != null) timer.stop();
+    /**
+     * Helper to create a standard semi-transparent "Card" for UI content.
+     */
+    public static JPanel createCard(int width, int height) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setPreferredSize(new Dimension(width, height));
+        card.setBackground(new Color(255, 255, 255, 230));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(180, 0, 0), 2),
+            BorderFactory.createEmptyBorder(25, 25, 25, 25)
+        ));
+        return card;
     }
 }

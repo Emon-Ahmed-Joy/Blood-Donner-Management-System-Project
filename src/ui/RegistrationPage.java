@@ -7,33 +7,31 @@ import model.Donor;
 import model.User;
 
 /**
- * Registration Page for new Users or Donors.
+ * Registration Page with Animated Background.
  */
 public class RegistrationPage extends JFrame {
     private JTextField nameF, emailF, groupF, stateF, locF;
     private JPasswordField passF;
     private JCheckBox isDonorCheck;
-    private JPanel donorFieldsPanel;
 
     public RegistrationPage() {
         setTitle("Create New Account");
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+
+        GradientPanel bgPanel = new GradientPanel();
+        JPanel card = GradientPanel.createCard(600, 650);
 
         // Header
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(200, 0, 0));
         JLabel title = new JLabel("Join Our Community", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("SansSerif", Font.BOLD, 22));
-        headerPanel.add(title);
-        add(headerPanel, BorderLayout.NORTH);
+        title.setForeground(new Color(180, 0, 0));
+        title.setFont(new Font("SansSerif", Font.BOLD, 28));
+        card.add(title, BorderLayout.NORTH);
 
         // Form
         JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(Color.WHITE);
+        formPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -52,7 +50,8 @@ public class RegistrationPage extends JFrame {
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
         isDonorCheck = new JCheckBox("Register as a Blood Donor?");
-        isDonorCheck.setBackground(Color.WHITE);
+        isDonorCheck.setOpaque(false);
+        isDonorCheck.setFont(new Font("SansSerif", Font.BOLD, 14));
         formPanel.add(isDonorCheck, gbc);
 
         // Donor specific fields
@@ -68,15 +67,16 @@ public class RegistrationPage extends JFrame {
         formPanel.add(new JLabel("Location:"), gbc);
         gbc.gridx = 1; locF = new JTextField(20); formPanel.add(locF, gbc);
 
-        add(formPanel, BorderLayout.CENTER);
+        card.add(formPanel, BorderLayout.CENTER);
 
         // Bottom Buttons
         JPanel btnPanel = new JPanel();
+        btnPanel.setOpaque(false);
         JButton regBtn = new JButton("Register Now");
         JButton backBtn = new JButton("Back to Login");
         btnPanel.add(regBtn);
         btnPanel.add(backBtn);
-        add(btnPanel, BorderLayout.SOUTH);
+        card.add(btnPanel, BorderLayout.SOUTH);
 
         // Actions
         regBtn.addActionListener(e -> handleRegistration());
@@ -95,6 +95,9 @@ public class RegistrationPage extends JFrame {
             stateF.setEnabled(selected);
             locF.setEnabled(selected);
         });
+
+        bgPanel.add(card);
+        add(bgPanel);
     }
 
     private void handleRegistration() {

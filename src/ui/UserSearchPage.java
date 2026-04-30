@@ -8,7 +8,7 @@ import javax.swing.*;
 import model.Donor;
 
 /**
- * Page to search for blood donors.
+ * Search Page with Animated Background.
  */
 public class UserSearchPage extends JFrame {
     private JTextField bloodGroupField, stateField, locationField;
@@ -19,55 +19,64 @@ public class UserSearchPage extends JFrame {
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+
+        GradientPanel bgPanel = new GradientPanel();
+        JPanel card = GradientPanel.createCard(1100, 600);
 
         // Header
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(200, 0, 0));
-        JLabel title = new JLabel("Find a Donor", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("SansSerif", Font.BOLD, 22));
-        headerPanel.add(title);
-        add(headerPanel, BorderLayout.NORTH);
+        JLabel title = new JLabel("Find a Life Saver", SwingConstants.CENTER);
+        title.setForeground(new Color(180, 0, 0));
+        title.setFont(new Font("SansSerif", Font.BOLD, 28));
+        card.add(title, BorderLayout.NORTH);
 
-        // Search Panel
+        // Main Panel
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 20));
+        mainPanel.setOpaque(false);
+
+        // Search Form
         JPanel searchPanel = new JPanel(new GridBagLayout());
+        searchPanel.setOpaque(false);
         searchPanel.setBorder(BorderFactory.createTitledBorder("Search Criteria"));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        searchPanel.add(new JLabel("Blood Group (e.g., O+):"), gbc);
-        gbc.gridx = 1; bloodGroupField = new JTextField(10); searchPanel.add(bloodGroupField, gbc);
+        searchPanel.add(new JLabel("Blood Group:"), gbc);
+        gbc.gridx = 1; bloodGroupField = new JTextField(15); searchPanel.add(bloodGroupField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
         searchPanel.add(new JLabel("State:"), gbc);
-        gbc.gridx = 1; stateField = new JTextField(10); searchPanel.add(stateField, gbc);
+        gbc.gridx = 1; stateField = new JTextField(15); searchPanel.add(stateField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2;
-        searchPanel.add(new JLabel("Location/City:"), gbc);
-        gbc.gridx = 1; locationField = new JTextField(10); searchPanel.add(locationField, gbc);
+        searchPanel.add(new JLabel("Location:"), gbc);
+        gbc.gridx = 1; locationField = new JTextField(15); searchPanel.add(locationField, gbc);
 
         gbc.gridx = 1; gbc.gridy = 3;
-        JButton searchBtn = new JButton("Search Now");
-        searchBtn.setBackground(new Color(200, 0, 0));
-        searchBtn.setForeground(Color.WHITE);
+        JButton searchBtn = new JButton("Search Donors");
         searchPanel.add(searchBtn, gbc);
 
-        add(searchPanel, BorderLayout.WEST);
+        mainPanel.add(searchPanel, BorderLayout.WEST);
 
-        // Results Panel
+        // Results
         JPanel resultsPanel = new JPanel(new BorderLayout());
-        resultsPanel.setBorder(BorderFactory.createTitledBorder("Donors Found"));
+        resultsPanel.setOpaque(false);
+        resultsPanel.setBorder(BorderFactory.createTitledBorder("Search Results"));
         resultsArea = new JTextArea();
         resultsArea.setEditable(false);
+        resultsArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
         resultsPanel.add(new JScrollPane(resultsArea), BorderLayout.CENTER);
-        add(resultsPanel, BorderLayout.CENTER);
+        mainPanel.add(resultsPanel, BorderLayout.CENTER);
+
+        card.add(mainPanel, BorderLayout.CENTER);
 
         // Bottom: Back
-        JButton backBtn = new JButton("Back to Login");
-        add(backBtn, BorderLayout.SOUTH);
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setOpaque(false);
+        JButton backBtn = new JButton("Back to Dashboard");
+        bottomPanel.add(backBtn);
+        card.add(bottomPanel, BorderLayout.SOUTH);
 
         // Actions
         searchBtn.addActionListener(e -> performSearch());
@@ -75,6 +84,9 @@ public class UserSearchPage extends JFrame {
             new LoginPage().setVisible(true);
             this.dispose();
         });
+
+        bgPanel.add(card);
+        add(bgPanel);
     }
 
     private void performSearch() {
@@ -82,22 +94,20 @@ public class UserSearchPage extends JFrame {
         String st = stateField.getText().trim().toLowerCase();
         String loc = locationField.getText().trim().toLowerCase();
 
-        resultsArea.setText("Searching...\n");
+        resultsArea.setText("Searching Database...\n");
         List<Donor> filtered = new ArrayList<>();
-
         for (Donor d : DataStore.donors) {
-            boolean matchBg = bg.isEmpty() || d.getBloodGroup().toLowerCase().contains(bg);
-            boolean matchSt = st.isEmpty() || d.getState().toLowerCase().contains(st);
-            boolean matchLoc = loc.isEmpty() || d.getLocation().toLowerCase().contains(loc);
-
-            if (matchBg && matchSt && matchLoc && d.isAvailable()) {
+            if ((bg.isEmpty() || d.getBloodGroup().toLowerCase().contains(bg)) &&
+                (st.isEmpty() || d.getState().toLowerCase().contains(st)) &&
+                (loc.isEmpty() || d.getLocation().toLowerCase().contains(loc)) &&
+                d.isAvailable()) {
                 filtered.add(d);
             }
         }
 
         resultsArea.setText("");
         if (filtered.isEmpty()) {
-            resultsArea.append("No available donors found matching your criteria.");
+            resultsArea.append("No donors found matching these criteria.");
         } else {
             for (Donor d : filtered) {
                 resultsArea.append(d.toString() + "\nContact: " + d.getEmail() + "\n\n");
