@@ -21,25 +21,32 @@ public class LoginPage extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Main Panel with Background
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(245, 245, 245));
+        // Custom Gradient Background
+        GradientPanel mainPanel = new GradientPanel();
+        mainPanel.setLayout(new GridBagLayout());
 
-        JLabel header = new JLabel("Welcome Back", SwingConstants.CENTER);
-        header.setFont(new Font("SansSerif", Font.BOLD, 28));
-        header.setForeground(new Color(200, 0, 0)); // Blood Red
-        header.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        mainPanel.add(header, BorderLayout.NORTH);
+        // Center Card
+        JPanel card = new JPanel(new BorderLayout());
+        card.setPreferredSize(new Dimension(450, 550));
+        card.setBackground(new Color(255, 255, 255, 240)); // Semi-transparent white
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 0, 0), 2),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        JLabel header = new JLabel("Blood Link", SwingConstants.CENTER);
+        header.setFont(new Font("SansSerif", Font.BOLD, 36));
+        header.setForeground(new Color(180, 0, 0));
+        card.add(header, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 14));
+        tabbedPane.addTab("User/Donor", createUserPanel());
+        tabbedPane.addTab("Administrator", createAdminPanel());
 
-        // User/Donor Login Panel
-        tabbedPane.addTab("User/Donor Login", createUserPanel());
-        // Admin Login Panel
-        tabbedPane.addTab("Admin Login", createAdminPanel());
-
-        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        card.add(tabbedPane, BorderLayout.CENTER);
+        
+        mainPanel.add(card);
         add(mainPanel);
     }
 
