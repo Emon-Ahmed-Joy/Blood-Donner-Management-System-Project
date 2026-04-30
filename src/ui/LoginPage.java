@@ -8,7 +8,7 @@ import model.Donor;
 import model.User;
 
 /**
- * Unified Login Page for Admin and Users/Donors.
+ * Modernized Login Page with Rounded Components and Shadow Cards.
  */
 public class LoginPage extends JFrame {
     private JTextField userEmailField, adminIdField;
@@ -21,21 +21,11 @@ public class LoginPage extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Custom Gradient Background
         GradientPanel mainPanel = new GradientPanel();
-        mainPanel.setLayout(new GridBagLayout());
-
-        // Center Card
-        JPanel card = new JPanel(new BorderLayout());
-        card.setPreferredSize(new Dimension(450, 550));
-        card.setBackground(new Color(255, 255, 255, 240)); // Semi-transparent white
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 0, 0), 2),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
+        JPanel card = GradientPanel.createCard(450, 580);
 
         JLabel header = new JLabel("Blood Link", SwingConstants.CENTER);
-        header.setFont(new Font("SansSerif", Font.BOLD, 36));
+        header.setFont(new Font("SansSerif", Font.BOLD, 42));
         header.setForeground(new Color(180, 0, 0));
         card.add(header, BorderLayout.NORTH);
 
@@ -45,38 +35,31 @@ public class LoginPage extends JFrame {
         tabbedPane.addTab("Administrator", createAdminPanel());
 
         card.add(tabbedPane, BorderLayout.CENTER);
-        
         mainPanel.add(card);
         add(mainPanel);
     }
 
     private JPanel createUserPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.WHITE);
+        panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Email:"), gbc);
-        gbc.gridx = 1;
-        userEmailField = new JTextField(20);
-        panel.add(userEmailField, gbc);
+        panel.add(new JLabel("Email Address:"), gbc);
+        gbc.gridx = 1; userEmailField = new JTextField(15); panel.add(userEmailField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
         panel.add(new JLabel("Password:"), gbc);
-        gbc.gridx = 1;
-        userPasswordField = new JPasswordField(20);
-        panel.add(userPasswordField, gbc);
+        gbc.gridx = 1; userPasswordField = new JPasswordField(15); panel.add(userPasswordField, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 2;
-        JButton loginBtn = new JButton("Login");
-        loginBtn.setBackground(new Color(200, 0, 0));
-        loginBtn.setForeground(Color.WHITE);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        RoundedButton loginBtn = new RoundedButton("Login to Account");
         panel.add(loginBtn, gbc);
 
         gbc.gridy = 3;
-        JButton regBtn = new JButton("Register New Account");
+        RoundedButton regBtn = new RoundedButton("Create New Account", new Color(50, 50, 50), new Color(80, 80, 80));
         panel.add(regBtn, gbc);
 
         loginBtn.addActionListener(e -> handleUserLogin());
@@ -90,67 +73,55 @@ public class LoginPage extends JFrame {
 
     private JPanel createAdminPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.WHITE);
+        panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("Admin ID:"), gbc);
-        gbc.gridx = 1;
-        adminIdField = new JTextField(20);
-        panel.add(adminIdField, gbc);
+        gbc.gridx = 1; adminIdField = new JTextField(15); panel.add(adminIdField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
         panel.add(new JLabel("Password:"), gbc);
-        gbc.gridx = 1;
-        adminPasswordField = new JPasswordField(20);
-        panel.add(adminPasswordField, gbc);
+        gbc.gridx = 1; adminPasswordField = new JPasswordField(15); panel.add(adminPasswordField, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 2;
-        JButton loginBtn = new JButton("Admin Login");
-        loginBtn.setBackground(new Color(50, 50, 50));
-        loginBtn.setForeground(Color.WHITE);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        RoundedButton loginBtn = new RoundedButton("System Login", new Color(30, 30, 30), new Color(60, 60, 60));
         panel.add(loginBtn, gbc);
 
         loginBtn.addActionListener(e -> handleAdminLogin());
-
         return panel;
     }
 
     private void handleUserLogin() {
         String email = userEmailField.getText();
         String password = new String(userPasswordField.getPassword());
-
         for (User user : DataStore.users) {
             if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
                 if (user instanceof Donor) {
-                    JOptionPane.showMessageDialog(this, "Welcome Donor: " + user.getName());
                     new DonorProfilePage((Donor)user).setVisible(true);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Welcome User: " + user.getName());
                     new UserHomePage(user).setVisible(true);
                 }
                 this.dispose();
                 return;
             }
         }
-        JOptionPane.showMessageDialog(this, "Invalid Email or Password", "Login Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Access Denied: Invalid Credentials", "Auth Error", JOptionPane.ERROR_MESSAGE);
     }
 
     private void handleAdminLogin() {
         String id = adminIdField.getText();
         String password = new String(adminPasswordField.getPassword());
-
         for (Admin admin : DataStore.admins) {
             if (admin.getAdminId().equals(id) && admin.getPassword().equals(password)) {
-                JOptionPane.showMessageDialog(this, "Admin Login Successful");
                 new AdminPage().setVisible(true);
                 this.dispose();
                 return;
             }
         }
-        JOptionPane.showMessageDialog(this, "Invalid Admin Credentials", "Login Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Access Denied: Invalid Admin ID", "Auth Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public static void main(String[] args) {

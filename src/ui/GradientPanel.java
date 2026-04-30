@@ -105,16 +105,28 @@ public class GradientPanel extends JPanel {
     }
 
     /**
-     * Helper to create a standard semi-transparent "Card" for UI content.
+     * Helper to create a standard semi-transparent "Card" with a soft shadow effect.
      */
     public static JPanel createCard(int width, int height) {
-        JPanel card = new JPanel(new BorderLayout());
+        JPanel card = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw shadow
+                g2.setColor(new Color(0, 0, 0, 30));
+                g2.fillRoundRect(5, 5, getWidth()-5, getHeight()-5, 20, 20);
+                
+                // Draw card background
+                g2.setColor(new Color(255, 255, 255, 245));
+                g2.fillRoundRect(0, 0, getWidth()-5, getHeight()-5, 20, 20);
+                g2.dispose();
+            }
+        };
+        card.setOpaque(false);
         card.setPreferredSize(new Dimension(width, height));
-        card.setBackground(new Color(255, 255, 255, 230));
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(180, 0, 0), 2),
-            BorderFactory.createEmptyBorder(25, 25, 25, 25)
-        ));
+        card.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         return card;
     }
 }
