@@ -4,70 +4,63 @@ BLOOD DONOR MANAGEMENT SYSTEM - PROJECT HANDOVER GUIDE
 
 1. PROJECT OVERVIEW
 -------------------
-This is a Java Swing-based Desktop Application designed to connect 
-blood donors with those in need. The system supports three distinct 
-user roles: Administrators, Donors, and General Users.
+This is a professional Java Swing-based Desktop Application designed 
+to connect blood donors with those in need. It features a modern, 
+animated UI and a multi-role synchronization system.
 
 Architecture:
-- model: Core data structures (User, Donor, Admin).
-- database: In-memory data management (to be replaced with MySQL).
-- ui: Professional Swing interfaces with role-based navigation.
+- model: User, Donor, Admin, and BloodRequest models.
+- database: Centralized DataStore (Ready for MySQL integration).
+- ui: Modern, animated components (GradientPanel, RoundedButton).
 
-2. USER MANUAL
---------------
+2. ADVANCED FEATURES (NEWLY ADDED)
+----------------------------------
 
-A. LOGIN SYSTEM
-   - Two tabs: "User/Donor Login" and "Admin Login".
-   - System automatically detects if a User is a Donor and redirects 
-     them to the appropriate dashboard.
+A. PROFESSIONAL UI/UX
+   - Animated Background: Floating blood-cell particles for a dynamic look.
+   - Modern Components: Rounded buttons with hover effects and shadowed cards.
+   - Widescreen Ready: Optimized for 1280x720 resolution.
 
-B. ADMIN DASHBOARD (Credentials: admin / admin123)
-   - View total donor statistics (Available vs. Busy).
-   - View all registered donor details.
-   - Monitor active blood requests.
+B. INTERACTIVE REQUEST SYSTEM
+   - Detailed Requests: Collects Patient Name, Hospital, and Condition.
+   - Live Tracking: Users can track their sent requests in real-time.
+   - Action Center: Donors can Accept or Decline requests with one click.
+   - Visibility: Donors see full patient/hospital details before accepting.
 
-C. DONOR PROFILE (Credentials: emon@gmail.com / pass123)
-   - View personal blood group and location details.
-   - Check if anyone has requested their blood.
-   - Use "Search for Blood" if they need blood themselves.
+C. ADMIN COMMAND CENTER
+   - Global Oversight: View every user, donor, and blood request in the system.
+   - Moderation Power: Admins can BLOCK or UNBLOCK users instantly.
+   - Security: Blocked accounts are automatically denied login access.
 
-D. USER HOMEPAGE (Credentials: user@gmail.com / pass123)
-   - For non-donors: Includes a "Register as a Donor" button to upgrade status.
-   - Standard "Search for Blood" functionality.
+3. USER MANUAL & TEST CREDENTIALS
+----------------------------------
 
-E. SEARCH & REGISTRATION
-   - Search by Blood Group, State, and Location.
-   - Registration allows creating a standard account or a Donor account.
+- ADMIN: ID: admin / Pass: admin123
+- DONOR: Email: emon@gmail.com / Pass: pass123
+- USER:  Email: user@gmail.com / Pass: pass123
 
-3. WORK DISTRIBUTION PLAN (4 MEMBERS)
+4. WORK DISTRIBUTION PLAN (4 MEMBERS)
 --------------------------------------
 
-MEMBER 1: PROJECT MANAGER (YOU)
-- UI/UX Refinement: Improving button icons and backgrounds.
-- GitHub Management: Pushing code, managing branches, and merging PRs.
-- Integration: Ensuring UI flows correctly after backend updates.
+MANAGER (YOU):
+- Focus on `Service-UI+Login-(Manager-Only)` branch.
+- Final UI polishing and icon integration.
+- Managing merges into `Development` branch.
 
-MEMBER 2 & 3: BACKEND LOGIC (LISAN & NASIR)
-- Search Algorithms: Refine 'performSearch()' in UserSearchPage.java 
-  to be more robust (handling partial matches, case sensitivity).
-- Request System: Implement the "Request Blood" logic so a user can 
-  click a donor and send a notification/request.
-- Validation: Add email format validation and password strength 
-  checks in RegistrationPage.java.
+BACKEND (LISAN & NASIR):
+- Branches: `Service-Backend-Logic-1` and `2`.
+- Refine the automated notification system based on the `BloodRequest` model.
+- Implement more complex search filters (e.g., proximity-based).
 
-MEMBER 4: DATABASE MANAGEMENT (DURJOY/MEMBER 4)
-- MySQL Setup: Create the 'blood_management' database and tables 
-  (users, donors, admins, requests).
-- DataStore Migration: Replace the static ArrayLists in DataStore.java 
-  with JDBC connection logic.
-- Persistence: Ensure that when a user registers, they are saved 
-  permanently to the database.
+DATABASE (DURJOY):
+- Branch: `Service-Database`.
+- Map the `BloodRequest` and `User` (with blocked status) models to MySQL.
+- Convert `DataStore.java` to use real database queries.
 
-4. HOW TO RUN THE PROJECT
--------------------------
-1. Open Terminal in project root.
-2. Compile: javac -d bin src/model/*.java src/database/*.java src/ui/*.java
-3. Run: java -cp bin ui.LoginPage
+5. HOW TO RUN
+-------------
+Compile: javac -d bin src/model/*.java src/database/*.java src/ui/*.java
+Run: java -cp bin ui.LoginPage
 
 ============================================================
 Generated by Gemini CLI - Project Manager Assistant

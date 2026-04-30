@@ -5,88 +5,155 @@ import java.awt.*;
 import java.util.List;
 import javax.swing.*;
 import model.Donor;
+import model.User;
+import model.BloodRequest;
 
 /**
- * Admin Dashboard to manage donors and view requests.
+ * Enhanced Admin Dashboard with Moderation Power.
  */
 public class AdminPage extends JFrame {
-    private JTextArea donorStatsArea;
-    private JTextArea requestsArea;
+    private JPanel usersContainer;
+    private JPanel requestsContainer;
 
     public AdminPage() {
-        setTitle("Admin Dashboard - Blood Donor Management");
+        setTitle("Admin Command Center - Blood Link");
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
 
-        // Header
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(50, 50, 50));
-        JLabel headerLabel = new JLabel("Admin Control Panel", SwingConstants.CENTER);
-        headerLabel.setForeground(Color.WHITE);
-        headerLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
-        headerPanel.add(headerLabel);
-        add(headerPanel, BorderLayout.NORTH);
+        GradientPanel bgPanel = new GradientPanel();
+        JPanel card = GradientPanel.createCard(1200, 650);
+        
+        JLabel headerLabel = new JLabel("System Administrator Control Panel", SwingConstants.CENTER);
+        headerLabel.setForeground(new Color(180, 0, 0));
+        headerLabel.setFont(new Font("SansSerif", Font.BOLD, 28));
+        card.add(headerLabel, BorderLayout.NORTH);
 
-        // Center Content: Stats and Requests
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-        // Donor Stats Section
-        JPanel statsPanel = new JPanel(new BorderLayout());
-        statsPanel.setBorder(BorderFactory.createTitledBorder("Donor Status & Details"));
-        donorStatsArea = new JTextArea();
-        donorStatsArea.setEditable(false);
-        statsPanel.add(new JScrollPane(donorStatsArea), BorderLayout.CENTER);
+        // Users & Donors Tab
+        usersContainer = new JPanel();
+        usersContainer.setLayout(new BoxLayout(usersContainer, BoxLayout.Y_AXIS));
+        tabs.addTab("Manage Users & Donors", new JScrollPane(usersContainer));
 
-        // Requests Section
-        JPanel requestsPanel = new JPanel(new BorderLayout());
-        requestsPanel.setBorder(BorderFactory.createTitledBorder("Active Blood Requests"));
-        requestsArea = new JTextArea("No pending blood requests.");
-        requestsArea.setEditable(false);
-        requestsPanel.add(new JScrollPane(requestsArea), BorderLayout.CENTER);
+        // Blood Requests Tab
+        requestsContainer = new JPanel();
+        requestsContainer.setLayout(new BoxLayout(requestsContainer, BoxLayout.Y_AXIS));
+        tabs.addTab("System Blood Requests", new JScrollPane(requestsContainer));
 
-        centerPanel.add(statsPanel);
-        centerPanel.add(requestsPanel);
-        add(centerPanel, BorderLayout.CENTER);
+        card.add(tabs, BorderLayout.CENTER);
 
-        // Bottom: Controls
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton refreshBtn = new JButton("Refresh Data");
-        JButton logoutBtn = new JButton("Logout");
-        controlPanel.add(refreshBtn);
-        controlPanel.add(logoutBtn);
-        add(controlPanel, BorderLayout.SOUTH);
+        // Bottom Controls
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottom.setOpaque(false);
+        RoundedButton refreshBtn = new RoundedButton("Sync Data");
+        RoundedButton logoutBtn = new RoundedButton("Exit System", new Color(50, 50, 50), new Color(80, 80, 80));
+        bottom.add(refreshBtn);
+        bottom.add(logoutBtn);
+        card.add(bottom, BorderLayout.SOUTH);
 
-        // Actions
-        refreshBtn.addActionListener(e -> refreshData());
+        refreshBtn.addActionListener(e -> refreshAllData());
         logoutBtn.addActionListener(e -> {
             new LoginPage().setVisible(true);
             this.dispose();
         });
 
-        refreshData();
+        bgPanel.add(card);
+        add(bgPanel);
+        refreshAllData();
     }
 
-    private void refreshData() {
-        donorStatsArea.setText("");
-        List<Donor> donors = DataStore.donors;
-        
-        int activeCount = 0;
-        int busyCount = 0;
+    private void refreshAllData() {
+        refreshUsers();
+        refreshRequests();
+    }
 
-        donorStatsArea.append("TOTAL DONORS: " + donors.size() + "\n");
-        donorStatsArea.append("-----------------------------\n");
-
-        for (Donor d : donors) {
-            if (d.isAvailable()) activeCount++;
-            else busyCount++;
-            donorStatsArea.append(d.toString() + "\n");
+    private void refreshUsers() {
+        usersContainer.removeAll();
+        for (User u : DataStore.users) {
+            usersContainer.add(createUserRow(u));
+            usersContainer.add(Box.createVerticalStrut(10));
         }
+        usersContainer.revalidate();
+        usersContainer.repaint();
+    }
 
-        donorStatsArea.append("\nSUMMARY:\n");
-        donorStatsArea.append("Available: " + activeCount + "\n");
-        donorStatsArea.append("Busy: " + busyCount + "\n");
+    private void refreshRequests() {
+        requestsContainer.removeAll();
+        for (BloodRequest req : DataStore.bloodRequests) {
+            requestsContainer.add(createRequestRow(req));
+            requestsContainer.add(Box.createVerticalStrut(10));
+        }
+        requestsContainer.revalidate();
+        requestsContainer.repaint();
+    }
+
+    private JPanel createUserRow(User user) {
+        JPanel row = new JPanel(new BorderLayout(15, 0));
+        row.setMaximumSize(new Dimension(1100, 70));
+        row.setBackground(new Color(245, 245, 245));
+        row.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        String role = user instanceof Donor ? "[DONOR]" : "[USER]";
+        String status = user.isBlocked() ? "<font color='red'>BLOCKED</font>" : "<font color='green'>ACTIVE</font>";
+        JLabel info = new JLabel("<html><b>" + role + " " + user.getName() + "</b> (" + user.getEmail() + ") | Status: " + status + "</html>");
+        row.add(info, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout());
+        btnPanel.setOpaque(false);
+        
+        RoundedButton detailsBtn = new RoundedButton("Full Details", new Color(70, 70, 70), new Color(100, 100, 100));
+        RoundedButton blockBtn = new RoundedButton(user.isBlocked() ? "Unblock" : "Block User", 
+                                                user.isBlocked() ? new Color(40, 167, 69) : new Color(220, 53, 69), 
+                                                Color.GRAY);
+
+        detailsBtn.addActionListener(e -> showUserDetails(user));
+        blockBtn.addActionListener(e -> {
+            user.setBlocked(!user.isBlocked());
+            refreshUsers();
+        });
+
+        btnPanel.add(detailsBtn);
+        btnPanel.add(blockBtn);
+        row.add(btnPanel, BorderLayout.EAST);
+        return row;
+    }
+
+    private JPanel createRequestRow(BloodRequest req) {
+        JPanel row = new JPanel(new BorderLayout(15, 0));
+        row.setMaximumSize(new Dimension(1100, 70));
+        row.setBackground(new Color(245, 245, 245));
+        row.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        JLabel info = new JLabel("<html><b>" + req.getRequesterName() + " -> " + req.getDonorEmail() + "</b> (" + req.getBloodGroup() + ") | Status: " + req.getStatus() + "</html>");
+        row.add(info, BorderLayout.CENTER);
+
+        RoundedButton detailsBtn = new RoundedButton("View Request Details", new Color(70, 70, 70), new Color(100, 100, 100));
+        detailsBtn.addActionListener(e -> showRequestDetails(req));
+        row.add(detailsBtn, BorderLayout.EAST);
+        return row;
+    }
+
+    private void showUserDetails(User user) {
+        String details = "Name: " + user.getName() + "\n" +
+                         "Email: " + user.getEmail() + "\n" +
+                         "Role: " + (user instanceof Donor ? "Donor" : "General User") + "\n";
+        if (user instanceof Donor) {
+            Donor d = (Donor) user;
+            details += "Blood Group: " + d.getBloodGroup() + "\n" +
+                       "Location: " + d.getLocation() + ", " + d.getState() + "\n";
+        }
+        JOptionPane.showMessageDialog(this, details, "User Information", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showRequestDetails(BloodRequest req) {
+        String details = "REQUESTER: " + req.getRequesterName() + " (" + req.getRequesterEmail() + ")\n" +
+                         "DONOR EMAIL: " + req.getDonorEmail() + "\n" +
+                         "BLOOD GROUP: " + req.getBloodGroup() + "\n\n" +
+                         "PATIENT: " + req.getPatientName() + "\n" +
+                         "HOSPITAL: " + req.getHospitalName() + " (" + req.getLocation() + ")\n" +
+                         "CONDITION: " + req.getMedicalCondition();
+        JOptionPane.showMessageDialog(this, details, "Blood Request Deep Dive", JOptionPane.INFORMATION_MESSAGE);
     }
 }

@@ -6,10 +6,15 @@ import model.Admin;
 import model.Donor;
 import model.User;
 
+import model.BloodRequest;
+
 public class DataStore {
     public static List<User> users = new ArrayList<>();
     public static List<Admin> admins = new ArrayList<>();
     public static List<Donor> donors = new ArrayList<>();
+    public static List<BloodRequest> bloodRequests = new ArrayList<>();
+
+    public static User currentUser; // To track who is logged in and making requests
 
     static {
         // Sample Admins

@@ -1,14 +1,17 @@
 package ui;
 
+import database.DataStore;
 import java.awt.*;
 import javax.swing.*;
 import model.User;
+import model.BloodRequest;
 
 /**
- * Homepage for non-donor users.
+ * User Homepage with Request Tracking.
  */
 public class UserHomePage extends JFrame {
     private User currentUser;
+    private JPanel requestsContainer;
 
     public UserHomePage(User user) {
         this.currentUser = user;
@@ -16,41 +19,60 @@ public class UserHomePage extends JFrame {
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+
+        GradientPanel bgPanel = new GradientPanel();
+        JPanel card = GradientPanel.createCard(1100, 600);
 
         // Header
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(200, 0, 0));
         JLabel welcomeLabel = new JLabel("Welcome, " + user.getName(), SwingConstants.CENTER);
-        welcomeLabel.setForeground(Color.WHITE);
-        welcomeLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
-        headerPanel.add(welcomeLabel);
-        add(headerPanel, BorderLayout.NORTH);
+        welcomeLabel.setForeground(new Color(180, 0, 0));
+        welcomeLabel.setFont(new Font("SansSerif", Font.BOLD, 32));
+        card.add(welcomeLabel, BorderLayout.NORTH);
 
-        // Content
-        JPanel contentPanel = new JPanel(new GridBagLayout());
-        contentPanel.setBackground(Color.WHITE);
+        // Main Content Area
+        JPanel mainContent = new JPanel(new GridLayout(1, 2, 20, 0));
+        mainContent.setOpaque(false);
+
+        // Left Side: Navigation Buttons
+        JPanel navPanel = new JPanel(new GridBagLayout());
+        navPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(20, 20, 20, 20);
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton registerBtn = new JButton("Register as a Donor");
+        JButton registerBtn = new RoundedButton("Register as a Donor");
         registerBtn.setPreferredSize(new Dimension(250, 100));
-        registerBtn.setBackground(new Color(200, 0, 0));
-        registerBtn.setForeground(Color.WHITE);
-        registerBtn.setFont(new Font("SansSerif", Font.BOLD, 16));
-
-        JButton searchBtn = new JButton("Search for Blood");
+        
+        JButton searchBtn = new RoundedButton("Search for Blood", new Color(50, 50, 50), new Color(80, 80, 80));
         searchBtn.setPreferredSize(new Dimension(250, 100));
-        searchBtn.setBackground(new Color(50, 50, 50));
-        searchBtn.setForeground(Color.WHITE);
-        searchBtn.setFont(new Font("SansSerif", Font.BOLD, 16));
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        contentPanel.add(registerBtn, gbc);
-        gbc.gridx = 1;
-        contentPanel.add(searchBtn, gbc);
+        gbc.gridx = 0; gbc.gridy = 0; navPanel.add(registerBtn, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; navPanel.add(searchBtn, gbc);
 
-        add(contentPanel, BorderLayout.CENTER);
+        // Right Side: My Requests Tracking
+        JPanel trackingPanel = new JPanel(new BorderLayout());
+        trackingPanel.setOpaque(false);
+        trackingPanel.setBorder(BorderFactory.createTitledBorder("My Sent Requests Status"));
+
+        requestsContainer = new JPanel();
+        requestsContainer.setLayout(new BoxLayout(requestsContainer, BoxLayout.Y_AXIS));
+        requestsContainer.setBackground(Color.WHITE);
+        
+        JScrollPane scrollPane = new JScrollPane(requestsContainer);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        trackingPanel.add(scrollPane, BorderLayout.CENTER);
+
+        mainContent.add(navPanel);
+        mainContent.add(trackingPanel);
+        card.add(mainContent, BorderLayout.CENTER);
+
+        // Bottom: Logout
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setOpaque(false);
+        RoundedButton logoutBtn = new RoundedButton("Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
+        bottomPanel.add(logoutBtn);
+        card.add(bottomPanel, BorderLayout.SOUTH);
 
         // Actions
         registerBtn.addActionListener(e -> {
@@ -63,11 +85,47 @@ public class UserHomePage extends JFrame {
             this.dispose();
         });
 
-        JButton logoutBtn = new JButton("Logout");
-        add(logoutBtn, BorderLayout.SOUTH);
         logoutBtn.addActionListener(e -> {
             new LoginPage().setVisible(true);
             this.dispose();
         });
+
+        bgPanel.add(card);
+        add(bgPanel);
+        
+        refreshMyRequests();
+    }
+
+    private void refreshMyRequests() {
+        requestsContainer.removeAll();
+        boolean hasRequests = false;
+
+        for (BloodRequest req : DataStore.bloodRequests) {
+            if (req.getRequesterEmail().equals(currentUser.getEmail())) {
+                requestsContainer.add(createTrackingRow(req));
+                requestsContainer.add(Box.createVerticalStrut(10));
+                hasRequests = true;
+            }
+        }
+
+        if (!hasRequests) {
+            requestsContainer.add(new JLabel("You haven't made any requests yet."));
+        }
+
+        requestsContainer.revalidate();
+        requestsContainer.repaint();
+    }
+
+    private JPanel createTrackingRow(BloodRequest req) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setMaximumSize(new Dimension(500, 60));
+        row.setBackground(new Color(245, 245, 245));
+        row.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        String statusColor = req.getStatus().equals("Accepted") ? "green" : req.getStatus().equals("Declined") ? "red" : "blue";
+        String info = "<html>Request to: " + req.getDonorEmail() + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></html>";
+        
+        row.add(new JLabel(info), BorderLayout.CENTER);
+        return row;
     }
 }
