@@ -1,15 +1,30 @@
 package database;
 
-import model.Donor;
 import java.util.ArrayList;
 import java.util.List;
+import model.Admin;
+import model.Donor;
+import model.User;
 
 public class DataStore {
+    public static List<User> users = new ArrayList<>();
+    public static List<Admin> admins = new ArrayList<>();
     public static List<Donor> donors = new ArrayList<>();
 
     static {
-        // Sample data
-        donors.add(new Donor("John Doe", "john@example.com", "pass123", "A+", "California", "Los Angeles"));
-        donors.add(new Donor("Jane Smith", "jane@example.com", "pass456", "O-", "New York", "Brooklyn"));
+        // Sample Admins
+        admins.add(new Admin("admin", "admin123"));
+
+        // Sample Donors
+        Donor emon = new Donor("Emon Ahmed Joy", "emon@gmail.com", "pass123", "O+", "Dhaka", "Savar");
+        users.add(emon);
+        donors.add(emon);
+
+        Donor durjoy = new Donor("Durjoy", "durjoy@gmail.com", "pass456", "O-", "Dhaka", "Khagan");
+        users.add(durjoy);
+        donors.add(durjoy);
+
+        // Sample User
+        users.add(new User("Normal User", "user@gmail.com", "pass123", false));
     }
 }

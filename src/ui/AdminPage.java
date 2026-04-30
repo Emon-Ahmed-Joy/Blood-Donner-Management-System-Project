@@ -1,58 +1,92 @@
 package ui;
 
 import database.DataStore;
-import model.Donor;
-
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.*;
+import model.Donor;
 
+/**
+ * Admin Dashboard to manage donors and view requests.
+ */
 public class AdminPage extends JFrame {
-    private JTextArea donorListArea;
+    private JTextArea donorStatsArea;
+    private JTextArea requestsArea;
 
     public AdminPage() {
-        setTitle("Admin Panel - Manage Donors");
-        setSize(700, 500);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Only close this window
+        setTitle("Admin Dashboard - Blood Donor Management");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        JLabel header = new JLabel("Admin Panel", SwingConstants.CENTER);
-        header.setFont(new Font("Serif", Font.BOLD, 24));
-        add(header, BorderLayout.NORTH);
+        // Header
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(new Color(50, 50, 50));
+        JLabel headerLabel = new JLabel("Admin Control Panel", SwingConstants.CENTER);
+        headerLabel.setForeground(Color.WHITE);
+        headerLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        headerPanel.add(headerLabel);
+        add(headerPanel, BorderLayout.NORTH);
 
-        donorListArea = new JTextArea();
-        donorListArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(donorListArea);
-        add(scrollPane, BorderLayout.CENTER);
+        // Center Content: Stats and Requests
+        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        JButton refreshButton = new JButton("Refresh Donor List");
-        JButton backButton = new JButton("Back to Login");
-        buttonPanel.add(refreshButton);
-        buttonPanel.add(backButton);
-        add(buttonPanel, BorderLayout.SOUTH);
+        // Donor Stats Section
+        JPanel statsPanel = new JPanel(new BorderLayout());
+        statsPanel.setBorder(BorderFactory.createTitledBorder("Donor Status & Details"));
+        donorStatsArea = new JTextArea();
+        donorStatsArea.setEditable(false);
+        statsPanel.add(new JScrollPane(donorStatsArea), BorderLayout.CENTER);
 
-        refreshButton.addActionListener(e -> loadDonors());
+        // Requests Section
+        JPanel requestsPanel = new JPanel(new BorderLayout());
+        requestsPanel.setBorder(BorderFactory.createTitledBorder("Active Blood Requests"));
+        requestsArea = new JTextArea("No pending blood requests.");
+        requestsArea.setEditable(false);
+        requestsPanel.add(new JScrollPane(requestsArea), BorderLayout.CENTER);
 
-        backButton.addActionListener(e -> {
+        centerPanel.add(statsPanel);
+        centerPanel.add(requestsPanel);
+        add(centerPanel, BorderLayout.CENTER);
+
+        // Bottom: Controls
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton refreshBtn = new JButton("Refresh Data");
+        JButton logoutBtn = new JButton("Logout");
+        controlPanel.add(refreshBtn);
+        controlPanel.add(logoutBtn);
+        add(controlPanel, BorderLayout.SOUTH);
+
+        // Actions
+        refreshBtn.addActionListener(e -> refreshData());
+        logoutBtn.addActionListener(e -> {
             new LoginPage().setVisible(true);
             this.dispose();
         });
 
-        loadDonors(); // Load donors on initial display
+        refreshData();
     }
 
-    private void loadDonors() {
-        donorListArea.setText(""); // Clear existing text
-        List<Donor> donors = DataStore.donors; // Using the in-memory DataStore for now
-        if (donors.isEmpty()) {
-            donorListArea.append("No donors registered yet.");
-        } else {
-            donorListArea.append("Registered Donors:\n\n");
-            for (int i = 0; i < donors.size(); i++) {
-                donorListArea.append((i + 1) + ". " + donors.get(i).toString() + "\n");
-            }
+    private void refreshData() {
+        donorStatsArea.setText("");
+        List<Donor> donors = DataStore.donors;
+        
+        int activeCount = 0;
+        int busyCount = 0;
+
+        donorStatsArea.append("TOTAL DONORS: " + donors.size() + "\n");
+        donorStatsArea.append("-----------------------------\n");
+
+        for (Donor d : donors) {
+            if (d.isAvailable()) activeCount++;
+            else busyCount++;
+            donorStatsArea.append(d.toString() + "\n");
         }
+
+        donorStatsArea.append("\nSUMMARY:\n");
+        donorStatsArea.append("Available: " + activeCount + "\n");
+        donorStatsArea.append("Busy: " + busyCount + "\n");
     }
 }
