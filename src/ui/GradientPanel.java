@@ -12,6 +12,7 @@ import javax.swing.*;
 /**
  * High-performance animated background panel.
  * Uses sub-pixel rendering for ultra-smooth movement.
+ * @author Emon Ahmed Joy
  */
 public class GradientPanel extends JPanel {
     private List<Particle> particles;
@@ -67,13 +68,17 @@ public class GradientPanel extends JPanel {
 
         // Draw Animated Particles with sub-pixel precision
         for (Particle p : particles) {
-            // Shadow/Glow
-            g2d.setColor(new Color(255, 255, 255, 15));
-            g2d.fill(new Ellipse2D.Double(p.x, p.y, p.radius, p.radius));
+            // Pulsing effect based on time (using particle's unique speed as a phase offset)
+            double pulse = Math.sin(System.currentTimeMillis() * 0.002 + p.dx * 10) * 0.2 + 0.8;
+            double currentRadius = p.radius * pulse;
+
+            // Outer Glow (Blood Cell Membrane)
+            g2d.setColor(new Color(200, 0, 0, (int)(15 * pulse)));
+            g2d.fill(new Ellipse2D.Double(p.x, p.y, currentRadius * 1.5, currentRadius));
             
-            // Core
-            g2d.setColor(new Color(180, 0, 0, 10));
-            g2d.fill(new Ellipse2D.Double(p.x + 2, p.y + 2, p.radius * 0.8, p.radius * 0.8));
+            // Core (Hemoglobin density)
+            g2d.setColor(new Color(150, 0, 0, (int)(10 * pulse)));
+            g2d.fill(new Ellipse2D.Double(p.x + currentRadius * 0.25, p.y + currentRadius * 0.1, currentRadius, currentRadius * 0.7));
         }
 
         // Essential for smooth animation on some systems (Linux/Windows)

@@ -2,6 +2,7 @@ package model;
 
 /**
  * Represents an administrator.
+ * @author Emon Ahmed Joy
  */
 public class Admin {
     private String adminId;

@@ -9,11 +9,14 @@ import model.User;
 import model.BloodRequest;
 
 /**
- * Enhanced Admin Dashboard with Moderation Power.
+ * Enhanced Admin Dashboard with Separated Role Management and Email Search.
+ * @author Emon Ahmed Joy
  */
 public class AdminPage extends JFrame {
     private JPanel usersContainer;
+    private JPanel donorsContainer;
     private JPanel requestsContainer;
+    private JTextField searchField;
 
     public AdminPage() {
         setTitle("Admin Command Center - Blood Link");
@@ -24,36 +27,65 @@ public class AdminPage extends JFrame {
         GradientPanel bgPanel = new GradientPanel();
         JPanel card = GradientPanel.createCard(1200, 650);
         
-        JLabel headerLabel = new JLabel("System Administrator Control Panel", SwingConstants.CENTER);
+        // Header Panel with Title and Search
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+
+        JLabel headerLabel = new JLabel("🛡️ System Administrator Control Panel", SwingConstants.CENTER);
         headerLabel.setForeground(new Color(180, 0, 0));
         headerLabel.setFont(new Font("SansSerif", Font.BOLD, 28));
-        card.add(headerLabel, BorderLayout.NORTH);
+        topPanel.add(headerLabel, BorderLayout.CENTER);
+
+        // Search Panel
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("🔍 Find User (Email):"));
+        searchField = new JTextField(20);
+        searchPanel.add(searchField);
+        RoundedButton goBtn = new RoundedButton("Search", new Color(70, 70, 70), new Color(100, 100, 100));
+        goBtn.setPreferredSize(new Dimension(80, 30));
+        searchPanel.add(goBtn);
+        topPanel.add(searchPanel, BorderLayout.SOUTH);
+
+        card.add(topPanel, BorderLayout.NORTH);
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-        // Users & Donors Tab
+        // Donors Tab
+        donorsContainer = new JPanel();
+        donorsContainer.setLayout(new BoxLayout(donorsContainer, BoxLayout.Y_AXIS));
+        tabs.addTab("🩸 Manage Donors", new JScrollPane(donorsContainer));
+
+        // General Users Tab
         usersContainer = new JPanel();
         usersContainer.setLayout(new BoxLayout(usersContainer, BoxLayout.Y_AXIS));
-        tabs.addTab("Manage Users & Donors", new JScrollPane(usersContainer));
+        tabs.addTab("👥 Manage General Users", new JScrollPane(usersContainer));
 
         // Blood Requests Tab
         requestsContainer = new JPanel();
         requestsContainer.setLayout(new BoxLayout(requestsContainer, BoxLayout.Y_AXIS));
-        tabs.addTab("System Blood Requests", new JScrollPane(requestsContainer));
+        tabs.addTab("📋 System Blood Requests", new JScrollPane(requestsContainer));
 
         card.add(tabs, BorderLayout.CENTER);
 
         // Bottom Controls
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottom.setOpaque(false);
-        RoundedButton refreshBtn = new RoundedButton("Sync Data");
-        RoundedButton logoutBtn = new RoundedButton("Exit System", new Color(50, 50, 50), new Color(80, 80, 80));
+        RoundedButton refreshBtn = new RoundedButton("🔄 Sync Data");
+        RoundedButton logoutBtn = new RoundedButton("🚪 Exit System", new Color(50, 50, 50), new Color(80, 80, 80));
         bottom.add(refreshBtn);
         bottom.add(logoutBtn);
         card.add(bottom, BorderLayout.SOUTH);
 
-        refreshBtn.addActionListener(e -> refreshAllData());
+        // Listeners
+        goBtn.addActionListener(e -> refreshAllData());
+        searchField.addActionListener(e -> refreshAllData());
+        refreshBtn.addActionListener(e -> {
+            searchField.setText("");
+            refreshAllData();
+        });
+        
         logoutBtn.addActionListener(e -> {
             new LoginPage().setVisible(true);
             this.dispose();
@@ -65,15 +97,35 @@ public class AdminPage extends JFrame {
     }
 
     private void refreshAllData() {
-        refreshUsers();
+        String filter = searchField.getText().trim().toLowerCase();
+        refreshDonors(filter);
+        refreshUsers(filter);
         refreshRequests();
     }
 
-    private void refreshUsers() {
+    private void refreshDonors(String filter) {
+        donorsContainer.removeAll();
+        for (User u : DataStore.users) {
+            if (u instanceof Donor) {
+                if (filter.isEmpty() || u.getEmail().toLowerCase().contains(filter)) {
+                    donorsContainer.add(createUserRow(u, true));
+                    donorsContainer.add(Box.createVerticalStrut(10));
+                }
+            }
+        }
+        donorsContainer.revalidate();
+        donorsContainer.repaint();
+    }
+
+    private void refreshUsers(String filter) {
         usersContainer.removeAll();
         for (User u : DataStore.users) {
-            usersContainer.add(createUserRow(u));
-            usersContainer.add(Box.createVerticalStrut(10));
+            if (!(u instanceof Donor)) {
+                if (filter.isEmpty() || u.getEmail().toLowerCase().contains(filter)) {
+                    usersContainer.add(createUserRow(u, false));
+                    usersContainer.add(Box.createVerticalStrut(10));
+                }
+            }
         }
         usersContainer.revalidate();
         usersContainer.repaint();
@@ -89,29 +141,32 @@ public class AdminPage extends JFrame {
         requestsContainer.repaint();
     }
 
-    private JPanel createUserRow(User user) {
+    private JPanel createUserRow(User user, boolean isDonor) {
         JPanel row = new JPanel(new BorderLayout(15, 0));
-        row.setMaximumSize(new Dimension(1100, 70));
+        row.setMaximumSize(new Dimension(1100, 75));
         row.setBackground(new Color(245, 245, 245));
-        row.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
 
-        String role = user instanceof Donor ? "[DONOR]" : "[USER]";
-        String status = user.isBlocked() ? "<font color='red'>BLOCKED</font>" : "<font color='green'>ACTIVE</font>";
-        JLabel info = new JLabel("<html><b>" + role + " " + user.getName() + "</b> (" + user.getEmail() + ") | Status: " + status + "</html>");
+        String role = isDonor ? "🩸 [DONOR]" : "👤 [USER]";
+        String status = user.isBlocked() ? "<font color='red'>🚫 BLOCKED</font>" : "<font color='green'>✅ ACTIVE</font>";
+        JLabel info = new JLabel("<html><b>" + role + " " + user.getName() + "</b><br>" + user.getEmail() + " | Status: " + status + "</html>");
         row.add(info, BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel(new FlowLayout());
         btnPanel.setOpaque(false);
         
-        RoundedButton detailsBtn = new RoundedButton("Full Details", new Color(70, 70, 70), new Color(100, 100, 100));
-        RoundedButton blockBtn = new RoundedButton(user.isBlocked() ? "Unblock" : "Block User", 
+        RoundedButton detailsBtn = new RoundedButton("👁️ Details", new Color(70, 70, 70), new Color(100, 100, 100));
+        RoundedButton blockBtn = new RoundedButton(user.isBlocked() ? "🔓 Unblock" : "🚫 Block", 
                                                 user.isBlocked() ? new Color(40, 167, 69) : new Color(220, 53, 69), 
                                                 Color.GRAY);
 
         detailsBtn.addActionListener(e -> showUserDetails(user));
         blockBtn.addActionListener(e -> {
             user.setBlocked(!user.isBlocked());
-            refreshUsers();
+            refreshAllData(); // Refresh both tabs to reflect status change
         });
 
         btnPanel.add(detailsBtn);
@@ -122,38 +177,43 @@ public class AdminPage extends JFrame {
 
     private JPanel createRequestRow(BloodRequest req) {
         JPanel row = new JPanel(new BorderLayout(15, 0));
-        row.setMaximumSize(new Dimension(1100, 70));
+        row.setMaximumSize(new Dimension(1100, 75));
         row.setBackground(new Color(245, 245, 245));
-        row.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
 
-        JLabel info = new JLabel("<html><b>" + req.getRequesterName() + " -> " + req.getDonorEmail() + "</b> (" + req.getBloodGroup() + ") | Status: " + req.getStatus() + "</html>");
+        String statusIcon = req.getStatus().equals("Accepted") ? "✅" : req.getStatus().equals("Declined") ? "❌" : "⏳";
+        JLabel info = new JLabel("<html>" + statusIcon + " <b>" + req.getRequesterName() + " ➔ " + req.getDonorEmail() + "</b><br>" +
+                               "Group: " + req.getBloodGroup() + " | Status: " + req.getStatus() + "</html>");
         row.add(info, BorderLayout.CENTER);
 
-        RoundedButton detailsBtn = new RoundedButton("View Request Details", new Color(70, 70, 70), new Color(100, 100, 100));
+        RoundedButton detailsBtn = new RoundedButton("👁️ View Request", new Color(70, 70, 70), new Color(100, 100, 100));
         detailsBtn.addActionListener(e -> showRequestDetails(req));
         row.add(detailsBtn, BorderLayout.EAST);
         return row;
     }
 
     private void showUserDetails(User user) {
-        String details = "Name: " + user.getName() + "\n" +
-                         "Email: " + user.getEmail() + "\n" +
-                         "Role: " + (user instanceof Donor ? "Donor" : "General User") + "\n";
+        String details = "📛 Name: " + user.getName() + "\n" +
+                         "📧 Email: " + user.getEmail() + "\n" +
+                         "🎭 Role: " + (user instanceof Donor ? "Donor" : "General User") + "\n";
         if (user instanceof Donor) {
             Donor d = (Donor) user;
-            details += "Blood Group: " + d.getBloodGroup() + "\n" +
-                       "Location: " + d.getLocation() + ", " + d.getState() + "\n";
+            details += "🩸 Blood Group: " + d.getBloodGroup() + "\n" +
+                       "📍 Location: " + d.getLocation() + ", " + d.getState() + "\n";
         }
         JOptionPane.showMessageDialog(this, details, "User Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void showRequestDetails(BloodRequest req) {
-        String details = "REQUESTER: " + req.getRequesterName() + " (" + req.getRequesterEmail() + ")\n" +
-                         "DONOR EMAIL: " + req.getDonorEmail() + "\n" +
-                         "BLOOD GROUP: " + req.getBloodGroup() + "\n\n" +
-                         "PATIENT: " + req.getPatientName() + "\n" +
-                         "HOSPITAL: " + req.getHospitalName() + " (" + req.getLocation() + ")\n" +
-                         "CONDITION: " + req.getMedicalCondition();
+        String details = "👤 REQUESTER: " + req.getRequesterName() + " (" + req.getRequesterEmail() + ")\n" +
+                         "🩸 DONOR EMAIL: " + req.getDonorEmail() + "\n" +
+                         "💉 BLOOD GROUP: " + req.getBloodGroup() + "\n\n" +
+                         "👤 PATIENT: " + req.getPatientName() + "\n" +
+                         "🏥 HOSPITAL: " + req.getHospitalName() + " (" + req.getLocation() + ")\n" +
+                         "🩺 CONDITION: " + req.getMedicalCondition();
         JOptionPane.showMessageDialog(this, details, "Blood Request Deep Dive", JOptionPane.INFORMATION_MESSAGE);
     }
 }

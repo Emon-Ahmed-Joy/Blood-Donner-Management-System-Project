@@ -9,6 +9,7 @@ import model.User;
 
 /**
  * Modernized Login Page with Rounded Components and Shadow Cards.
+ * @author Emon Ahmed Joy
  */
 public class LoginPage extends JFrame {
     private JTextField userEmailField, adminIdField;
@@ -24,15 +25,15 @@ public class LoginPage extends JFrame {
         GradientPanel mainPanel = new GradientPanel();
         JPanel card = GradientPanel.createCard(450, 580);
 
-        JLabel header = new JLabel("Blood Link", SwingConstants.CENTER);
+        JLabel header = new JLabel("🩸 Blood Link", SwingConstants.CENTER);
         header.setFont(new Font("SansSerif", Font.BOLD, 42));
         header.setForeground(new Color(180, 0, 0));
         card.add(header, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 14));
-        tabbedPane.addTab("User/Donor", createUserPanel());
-        tabbedPane.addTab("Administrator", createAdminPanel());
+        tabbedPane.addTab("👤 User/Donor", createUserPanel());
+        tabbedPane.addTab("🛡️ Administrator", createAdminPanel());
 
         card.add(tabbedPane, BorderLayout.CENTER);
         mainPanel.add(card);
@@ -47,19 +48,19 @@ public class LoginPage extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Email Address:"), gbc);
+        panel.add(new JLabel("📧 Email Address:"), gbc);
         gbc.gridx = 1; userEmailField = new JTextField(15); panel.add(userEmailField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Password:"), gbc);
+        panel.add(new JLabel("🔒 Password:"), gbc);
         gbc.gridx = 1; userPasswordField = new JPasswordField(15); panel.add(userPasswordField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
-        RoundedButton loginBtn = new RoundedButton("Login to Account");
+        RoundedButton loginBtn = new RoundedButton("🔑 Login to Account");
         panel.add(loginBtn, gbc);
 
         gbc.gridy = 3;
-        RoundedButton regBtn = new RoundedButton("Create New Account", new Color(50, 50, 50), new Color(80, 80, 80));
+        RoundedButton regBtn = new RoundedButton("➕ Create New Account", new Color(50, 50, 50), new Color(80, 80, 80));
         panel.add(regBtn, gbc);
 
         loginBtn.addActionListener(e -> handleUserLogin());
@@ -79,15 +80,15 @@ public class LoginPage extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Admin ID:"), gbc);
+        panel.add(new JLabel("🆔 Admin ID:"), gbc);
         gbc.gridx = 1; adminIdField = new JTextField(15); panel.add(adminIdField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Password:"), gbc);
+        panel.add(new JLabel("🔒 Password:"), gbc);
         gbc.gridx = 1; adminPasswordField = new JPasswordField(15); panel.add(adminPasswordField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
-        RoundedButton loginBtn = new RoundedButton("System Login", new Color(30, 30, 30), new Color(60, 60, 60));
+        RoundedButton loginBtn = new RoundedButton("🛡️ System Login", new Color(30, 30, 30), new Color(60, 60, 60));
         panel.add(loginBtn, gbc);
 
         loginBtn.addActionListener(e -> handleAdminLogin());

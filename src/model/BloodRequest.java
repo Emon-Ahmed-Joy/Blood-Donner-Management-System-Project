@@ -4,6 +4,7 @@ import java.util.Date;
 
 /**
  * Represents a blood request with detailed patient and hospital information.
+ * @author Emon Ahmed Joy
  */
 public class BloodRequest {
     private String requesterEmail;

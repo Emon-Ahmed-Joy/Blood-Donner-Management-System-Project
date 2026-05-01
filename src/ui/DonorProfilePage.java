@@ -8,6 +8,7 @@ import model.BloodRequest;
 
 /**
  * Donor Profile Page with Interactive Request Management.
+ * @author Emon Ahmed Joy
  */
 public class DonorProfilePage extends JFrame {
     private Donor currentDonor;
@@ -24,10 +25,16 @@ public class DonorProfilePage extends JFrame {
         JPanel card = GradientPanel.createCard(1050, 600);
 
         // Header
-        JLabel titleLabel = new JLabel("Donor Dashboard", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("📊 Donor Dashboard", SwingConstants.CENTER);
         titleLabel.setForeground(new Color(180, 0, 0));
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 28));
         card.add(titleLabel, BorderLayout.NORTH);
+
+        // Notification Check
+        if (donor.hasUpdate()) {
+            JOptionPane.showMessageDialog(this, "🔔 You have new incoming blood requests!", "System Notification", JOptionPane.INFORMATION_MESSAGE);
+            donor.setHasUpdate(false); // Clear flag after showing
+        }
 
         // Main Content
         JPanel mainContent = new JPanel(new GridLayout(1, 2, 20, 20));
@@ -37,15 +44,15 @@ public class DonorProfilePage extends JFrame {
         JPanel detailsPanel = new JPanel();
         detailsPanel.setOpaque(false);
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-        detailsPanel.setBorder(BorderFactory.createTitledBorder("My Account Details"));
+        detailsPanel.setBorder(BorderFactory.createTitledBorder("👤 My Account Details"));
 
-        detailsPanel.add(createDetailLabel("Name: " + donor.getName()));
-        detailsPanel.add(createDetailLabel("Email: " + donor.getEmail()));
-        detailsPanel.add(createDetailLabel("Blood Group: " + donor.getBloodGroup()));
-        detailsPanel.add(createDetailLabel("Location: " + donor.getLocation() + ", " + donor.getState()));
-        detailsPanel.add(createDetailLabel("Status: " + (donor.isAvailable() ? "Available to Donate" : "Currently Busy")));
+        detailsPanel.add(createDetailLabel("📛 Name: " + donor.getName()));
+        detailsPanel.add(createDetailLabel("📧 Email: " + donor.getEmail()));
+        detailsPanel.add(createDetailLabel("🩸 Blood Group: " + donor.getBloodGroup()));
+        detailsPanel.add(createDetailLabel("📍 Location: " + donor.getLocation() + ", " + donor.getState()));
+        detailsPanel.add(createDetailLabel("📡 Status: " + (donor.isAvailable() ? "🟢 Available" : "🔴 Busy")));
 
-        RoundedButton searchBtn = new RoundedButton("Search for Donors");
+        RoundedButton searchBtn = new RoundedButton("🔍 Search for Donors");
         searchBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
         searchBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         detailsPanel.add(Box.createVerticalStrut(30));
@@ -54,7 +61,9 @@ public class DonorProfilePage extends JFrame {
         // Right Side: Interactive Requests
         JPanel requestsPanel = new JPanel(new BorderLayout());
         requestsPanel.setOpaque(false);
-        requestsPanel.setBorder(BorderFactory.createTitledBorder("Manage Incoming Requests"));
+        JLabel requestsHeader = new JLabel("📨 Manage Incoming Requests", SwingConstants.CENTER);
+        requestsHeader.setFont(new Font("SansSerif", Font.BOLD, 18));
+        requestsPanel.add(requestsHeader, BorderLayout.NORTH);
 
         requestsContainer = new JPanel();
         requestsContainer.setLayout(new BoxLayout(requestsContainer, BoxLayout.Y_AXIS));
@@ -72,7 +81,7 @@ public class DonorProfilePage extends JFrame {
         // Bottom: Logout
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setOpaque(false);
-        RoundedButton logoutBtn = new RoundedButton("Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
+        RoundedButton logoutBtn = new RoundedButton("🚪 Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
         bottomPanel.add(logoutBtn);
         card.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -106,7 +115,7 @@ public class DonorProfilePage extends JFrame {
         }
 
         if (!hasRequests) {
-            JLabel emptyLabel = new JLabel("No requests found at the moment.");
+            JLabel emptyLabel = new JLabel("No requests found at the moment. 🍃", SwingConstants.CENTER);
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             requestsContainer.add(emptyLabel);
         }
@@ -117,18 +126,19 @@ public class DonorProfilePage extends JFrame {
 
     private JPanel createRequestRow(BloodRequest req) {
         JPanel row = new JPanel(new BorderLayout(10, 0));
-        row.setMaximumSize(new Dimension(500, 100));
-        row.setPreferredSize(new Dimension(450, 100));
+        row.setMaximumSize(new Dimension(500, 110));
+        row.setPreferredSize(new Dimension(450, 110));
         row.setBackground(new Color(245, 245, 245));
         row.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
 
         // Info
+        String statusIcon = req.getStatus().equals("Accepted") ? "✅" : req.getStatus().equals("Declined") ? "❌" : "⏳";
         String statusColor = req.getStatus().equals("Accepted") ? "green" : req.getStatus().equals("Declined") ? "red" : "black";
-        String info = "<html><b>From: " + req.getRequesterName() + "</b><br>" +
-                      "Status: <font color='" + statusColor + "'>" + req.getStatus() + "</font></html>";
+        String info = "<html><b>👤 From: " + req.getRequesterName() + "</b><br>" +
+                      "Status: " + statusIcon + " <font color='" + statusColor + "'>" + req.getStatus() + "</font></html>";
         JLabel infoLabel = new JLabel(info);
         row.add(infoLabel, BorderLayout.CENTER);
 
@@ -137,19 +147,20 @@ public class DonorProfilePage extends JFrame {
             JPanel btnPanel = new JPanel(new GridLayout(3, 1, 5, 5));
             btnPanel.setOpaque(false);
             
-            RoundedButton detailsBtn = new RoundedButton("View Details", new Color(50, 50, 50), new Color(80, 80, 80));
-            RoundedButton acceptBtn = new RoundedButton("Accept", new Color(40, 167, 69), new Color(33, 136, 56));
-            RoundedButton declineBtn = new RoundedButton("Decline", new Color(220, 53, 69), new Color(200, 35, 51));
+            RoundedButton detailsBtn = new RoundedButton("👁️ View Details", new Color(50, 50, 50), new Color(80, 80, 80));
+            RoundedButton acceptBtn = new RoundedButton("✅ Accept", new Color(40, 167, 69), new Color(33, 136, 56));
+            RoundedButton declineBtn = new RoundedButton("❌ Decline", new Color(220, 53, 69), new Color(200, 35, 51));
             
             detailsBtn.addActionListener(e -> showRequestDetails(req));
 
             acceptBtn.addActionListener(e -> {
-                req.setStatus("Accepted");
+                database.DataStore.updateRequestStatus(req, "Accepted");
                 refreshRequests();
+                JOptionPane.showMessageDialog(this, "Success: You have accepted the request. 🤝");
             });
             
             declineBtn.addActionListener(e -> {
-                req.setStatus("Declined");
+                database.DataStore.updateRequestStatus(req, "Declined");
                 refreshRequests();
             });
             
@@ -163,10 +174,10 @@ public class DonorProfilePage extends JFrame {
     }
 
     private void showRequestDetails(BloodRequest req) {
-        String msg = "Patient: " + req.getPatientName() + "\n" +
-                     "Hospital: " + req.getHospitalName() + "\n" +
-                     "Location: " + req.getLocation() + "\n" +
-                     "Condition: " + req.getMedicalCondition();
+        String msg = "🏥 Hospital: " + req.getHospitalName() + "\n" +
+                     "👤 Patient: " + req.getPatientName() + "\n" +
+                     "📍 Location: " + req.getLocation() + "\n" +
+                     "🩺 Condition: " + req.getMedicalCondition();
         JOptionPane.showMessageDialog(this, msg, "Request Details", JOptionPane.INFORMATION_MESSAGE);
     }
 

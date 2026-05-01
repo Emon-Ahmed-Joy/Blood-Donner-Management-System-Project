@@ -7,7 +7,8 @@ import model.User;
 import model.BloodRequest;
 
 /**
- * User Homepage with Request Tracking.
+ * User Homepage with Request Tracking and Notifications.
+ * @author Emon Ahmed Joy
  */
 public class UserHomePage extends JFrame {
     private User currentUser;
@@ -24,10 +25,16 @@ public class UserHomePage extends JFrame {
         JPanel card = GradientPanel.createCard(1100, 600);
 
         // Header
-        JLabel welcomeLabel = new JLabel("Welcome, " + user.getName(), SwingConstants.CENTER);
+        JLabel welcomeLabel = new JLabel("👋 Welcome, " + user.getName(), SwingConstants.CENTER);
         welcomeLabel.setForeground(new Color(180, 0, 0));
         welcomeLabel.setFont(new Font("SansSerif", Font.BOLD, 32));
         card.add(welcomeLabel, BorderLayout.NORTH);
+
+        // Notification Check
+        if (user.hasUpdate()) {
+            JOptionPane.showMessageDialog(this, "🔔 One of your blood requests has been updated!", "Request Update", JOptionPane.INFORMATION_MESSAGE);
+            user.setHasUpdate(false);
+        }
 
         // Main Content Area
         JPanel mainContent = new JPanel(new GridLayout(1, 2, 20, 0));
@@ -40,10 +47,10 @@ public class UserHomePage extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton registerBtn = new RoundedButton("Register as a Donor");
+        JButton registerBtn = new RoundedButton("🩸 Register as a Donor");
         registerBtn.setPreferredSize(new Dimension(250, 100));
         
-        JButton searchBtn = new RoundedButton("Search for Blood", new Color(50, 50, 50), new Color(80, 80, 80));
+        JButton searchBtn = new RoundedButton("🔍 Search for Blood", new Color(50, 50, 50), new Color(80, 80, 80));
         searchBtn.setPreferredSize(new Dimension(250, 100));
 
         gbc.gridx = 0; gbc.gridy = 0; navPanel.add(registerBtn, gbc);
@@ -52,7 +59,9 @@ public class UserHomePage extends JFrame {
         // Right Side: My Requests Tracking
         JPanel trackingPanel = new JPanel(new BorderLayout());
         trackingPanel.setOpaque(false);
-        trackingPanel.setBorder(BorderFactory.createTitledBorder("My Sent Requests Status"));
+        JLabel trackingHeader = new JLabel("📋 My Sent Requests Status", SwingConstants.CENTER);
+        trackingHeader.setFont(new Font("SansSerif", Font.BOLD, 18));
+        trackingPanel.add(trackingHeader, BorderLayout.NORTH);
 
         requestsContainer = new JPanel();
         requestsContainer.setLayout(new BoxLayout(requestsContainer, BoxLayout.Y_AXIS));
@@ -70,7 +79,7 @@ public class UserHomePage extends JFrame {
         // Bottom: Logout
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setOpaque(false);
-        RoundedButton logoutBtn = new RoundedButton("Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
+        RoundedButton logoutBtn = new RoundedButton("🚪 Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
         bottomPanel.add(logoutBtn);
         card.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -109,7 +118,9 @@ public class UserHomePage extends JFrame {
         }
 
         if (!hasRequests) {
-            requestsContainer.add(new JLabel("You haven't made any requests yet."));
+            JLabel emptyLabel = new JLabel("No requests sent yet. 🎈", SwingConstants.CENTER);
+            emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            requestsContainer.add(emptyLabel);
         }
 
         requestsContainer.revalidate();
@@ -122,8 +133,9 @@ public class UserHomePage extends JFrame {
         row.setBackground(new Color(245, 245, 245));
         row.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        String statusIcon = req.getStatus().equals("Accepted") ? "✅" : req.getStatus().equals("Declined") ? "❌" : "⏳";
         String statusColor = req.getStatus().equals("Accepted") ? "green" : req.getStatus().equals("Declined") ? "red" : "blue";
-        String info = "<html>Request to: " + req.getDonorEmail() + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></html>";
+        String info = "<html>" + statusIcon + " Request to: " + req.getDonorEmail() + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></html>";
         
         row.add(new JLabel(info), BorderLayout.CENTER);
         return row;

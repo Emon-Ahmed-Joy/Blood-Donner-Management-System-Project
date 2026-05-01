@@ -10,6 +10,7 @@ public class User {
     protected String password;
     protected boolean isDonor;
     protected boolean isBlocked;
+    protected boolean hasUpdate; // Notification flag
 
     public User(String name, String email, String password, boolean isDonor) {
         this.name = name;
@@ -17,6 +18,7 @@ public class User {
         this.password = password;
         this.isDonor = isDonor;
         this.isBlocked = false;
+        this.hasUpdate = false;
     }
 
     public String getName() { return name; }
@@ -24,6 +26,9 @@ public class User {
     public String getPassword() { return password; }
     public boolean isDonor() { return isDonor; }
     public boolean isBlocked() { return isBlocked; }
+    public boolean hasUpdate() { return hasUpdate; }
+    
     public void setDonor(boolean donor) { isDonor = donor; }
     public void setBlocked(boolean blocked) { isBlocked = blocked; }
+    public void setHasUpdate(boolean hasUpdate) { this.hasUpdate = hasUpdate; }
 }

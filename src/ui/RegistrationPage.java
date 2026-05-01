@@ -8,6 +8,7 @@ import model.User;
 
 /**
  * Registration Page with Animated Background.
+ * @author Emon Ahmed Joy
  */
 public class RegistrationPage extends JFrame {
     private JTextField nameF, emailF, groupF, stateF, locF;
