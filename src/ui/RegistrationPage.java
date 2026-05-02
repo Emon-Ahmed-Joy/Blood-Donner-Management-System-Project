@@ -27,7 +27,7 @@ public class RegistrationPage extends JFrame {
         // Header
         JLabel title = new JLabel("Join Our Community", SwingConstants.CENTER);
         title.setForeground(new Color(180, 0, 0));
-        title.setFont(new Font("SansSerif", Font.BOLD, 28));
+        title.setFont(new Font("Dialog", Font.BOLD, 28));
         card.add(title, BorderLayout.NORTH);
 
         // Form
@@ -52,7 +52,7 @@ public class RegistrationPage extends JFrame {
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
         isDonorCheck = new JCheckBox("Register as a Blood Donor?");
         isDonorCheck.setOpaque(false);
-        isDonorCheck.setFont(new Font("SansSerif", Font.BOLD, 14));
+        isDonorCheck.setFont(new Font("Dialog", Font.BOLD, 14));
         formPanel.add(isDonorCheck, gbc);
 
         // Donor specific fields
@@ -73,8 +73,8 @@ public class RegistrationPage extends JFrame {
         // Bottom Buttons
         JPanel btnPanel = new JPanel();
         btnPanel.setOpaque(false);
-        JButton regBtn = new JButton("Register Now");
-        JButton backBtn = new JButton("Back to Login");
+        JButton regBtn = new RoundedButton("Register Now");
+        JButton backBtn = new RoundedButton("Back to Login", new Color(50, 50, 50), new Color(80, 80, 80));
         btnPanel.add(regBtn);
         btnPanel.add(backBtn);
         card.add(btnPanel, BorderLayout.SOUTH);

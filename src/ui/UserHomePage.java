@@ -25,14 +25,14 @@ public class UserHomePage extends JFrame {
         JPanel card = GradientPanel.createCard(1100, 600);
 
         // Header
-        JLabel welcomeLabel = new JLabel("\uD83D\uDC4B Welcome, " + user.getName(), SwingConstants.CENTER);
+        JLabel welcomeLabel = new JLabel("Welcome, " + user.getName(), SwingConstants.CENTER);
         welcomeLabel.setForeground(new Color(180, 0, 0));
         welcomeLabel.setFont(new Font("Dialog", Font.BOLD, 32));
         card.add(welcomeLabel, BorderLayout.NORTH);
 
         // Notification Check
         if (user.hasUpdate()) {
-            JOptionPane.showMessageDialog(this, "\uD83D\uDD14 One of your blood requests has been updated!", "Request Update", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "(!) One of your blood requests has been updated!", "Request Update", JOptionPane.INFORMATION_MESSAGE);
             user.setHasUpdate(false);
         }
 
@@ -47,10 +47,10 @@ public class UserHomePage extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton registerBtn = new RoundedButton("\uD83E\uDE78 Register as a Donor");
+        JButton registerBtn = new RoundedButton("<html><font color='red'>&hearts;</font> Register as a Donor</html>");
         registerBtn.setPreferredSize(new Dimension(250, 100));
         
-        JButton searchBtn = new RoundedButton("\uD83D\uDD0D Search for Blood", new Color(50, 50, 50), new Color(80, 80, 80));
+        JButton searchBtn = new RoundedButton("Search for Blood", new Color(50, 50, 50), new Color(80, 80, 80));
         searchBtn.setPreferredSize(new Dimension(250, 100));
 
         gbc.gridx = 0; gbc.gridy = 0; navPanel.add(registerBtn, gbc);
@@ -59,7 +59,7 @@ public class UserHomePage extends JFrame {
         // Right Side: My Requests Tracking
         JPanel trackingPanel = new JPanel(new BorderLayout());
         trackingPanel.setOpaque(false);
-        JLabel trackingHeader = new JLabel("\uD83D\uDCCB My Sent Requests Status", SwingConstants.CENTER);
+        JLabel trackingHeader = new JLabel("My Sent Requests Status", SwingConstants.CENTER);
         trackingHeader.setFont(new Font("Dialog", Font.BOLD, 18));
         trackingPanel.add(trackingHeader, BorderLayout.NORTH);
 
@@ -79,7 +79,7 @@ public class UserHomePage extends JFrame {
         // Bottom: Logout
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setOpaque(false);
-        RoundedButton logoutBtn = new RoundedButton("\uD83D\uDEAA Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
+        RoundedButton logoutBtn = new RoundedButton("Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
         bottomPanel.add(logoutBtn);
         card.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -118,7 +118,7 @@ public class UserHomePage extends JFrame {
         }
 
         if (!hasRequests) {
-            JLabel emptyLabel = new JLabel("No requests sent yet. \uD83C\uDF88", SwingConstants.CENTER);
+            JLabel emptyLabel = new JLabel("No requests sent yet.", SwingConstants.CENTER);
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             requestsContainer.add(emptyLabel);
         }
@@ -133,7 +133,7 @@ public class UserHomePage extends JFrame {
         row.setBackground(new Color(245, 245, 245));
         row.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        String statusIcon = req.getStatus().equals("Accepted") ? "\u2705" : req.getStatus().equals("Declined") ? "\u274C" : "\u23F3";
+        String statusIcon = req.getStatus().equals("Accepted") ? "V" : req.getStatus().equals("Declined") ? "X" : "?";
         String statusColor = req.getStatus().equals("Accepted") ? "green" : req.getStatus().equals("Declined") ? "red" : "blue";
         String info = "<html>" + statusIcon + " Request to: " + req.getDonorEmail() + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></html>";
         

@@ -25,9 +25,8 @@ public class LoginPage extends JFrame {
         GradientPanel mainPanel = new GradientPanel();
         JPanel card = GradientPanel.createCard(450, 580);
 
-        JLabel header = new JLabel("\uD83E\uDE78 Blood Link", SwingConstants.CENTER);
+        JLabel header = new JLabel("<html><font color='#B40000'>&hearts;</font> Blood Link</html>", SwingConstants.CENTER);
         header.setFont(new Font("Dialog", Font.BOLD, 42));
-        header.setForeground(new Color(180, 0, 0));
         card.add(header, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
