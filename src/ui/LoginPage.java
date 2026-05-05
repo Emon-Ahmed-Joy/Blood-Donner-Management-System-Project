@@ -8,7 +8,7 @@ import model.Donor;
 import model.User;
 
 /**
- * Modernized Login Page with Rounded Components and Shadow Cards.
+ * Login Page for the application.
  * @author Emon Ahmed Joy
  */
 public class LoginPage extends JFrame {
@@ -37,6 +37,9 @@ public class LoginPage extends JFrame {
         card.add(tabbedPane, BorderLayout.CENTER);
         mainPanel.add(card);
         add(mainPanel);
+
+        // Animation
+        mainPanel.fadeIn();
     }
 
     private JPanel createUserPanel() {

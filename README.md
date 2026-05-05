@@ -4,28 +4,28 @@
 ![Author](https://img.shields.io/badge/Author-Emon_Ahmed_Joy-red?style=for-the-badge)
 ![Language](https://img.shields.io/badge/Language-Java_Swing-orange?style=for-the-badge)
 
-**Blood Link** is a professional-grade Desktop Application designed to bridge the gap between blood donors and recipients. It features a modern, animated interface with a robust backend logic for real-time request tracking and administration.
+**Blood Link** is a Desktop Application designed to connect blood donors and recipients. It features a modern interface with logic for request tracking and administration.
 
 ---
 
 ## ✨ Key Features
 
-### 🎨 Modern UI/UX
-*   **Animated Background**: High-performance particles (blood cells) pulsing in real-time.
-*   **Premium Components**: Sleek, pill-shaped buttons with gradients and shadow-card containers.
-*   **Intuitive Navigation**: Tabbed login system and icon-rich dashboards for all roles.
+### 🎨 UI/UX
+*   **Animated Background**: Blood-cell particles moving in real-time.
+*   **Custom Components**: Pill-shaped buttons with gradients and shadow-card containers.
+*   **Navigation**: Tabbed login system and dashboards for all roles.
 
-### 🔍 Advanced Search Engine
-*   **Proximity Scoring**: An intelligent algorithm that prioritizes results by matching Blood Group, then City, then State.
-*   **Availability Filtering**: Only shows donors who are currently available to donate.
+### 🔍 Search Engine
+*   **Proximity Scoring**: An algorithm that prioritizes results by matching Blood Group, then City, then State.
+*   **Availability**: Only shows donors who are currently available.
 
-### 🔔 Interactive Notification System
-*   **Live Alerts**: Automated popup notifications notify Donors of new requests and Users of status updates (Accepted/Declined).
+### 🔔 Notifications
+*   **Alerts**: Popup notifications notify Donors of new requests and Users of status updates.
 
-### 🛡️ Admin Command Center
-*   **Role-Based Management**: Separate tabs for managing Donors and General Users.
-*   **Global Search**: Instantly find any account by its email address.
-*   **Account Moderation**: One-click Block/Unblock functionality with immediate access restriction.
+### 🛡️ Admin Panel
+*   **Management**: Separate tabs for managing Donors and General Users.
+*   **Search**: Find any account by email address.
+*   **Moderation**: Block/Unblock functionality to restrict access.
 
 ---
 
@@ -70,7 +70,7 @@ Every file in this project is officially branded and documented.
 
 ## 🚀 Roadmap
 - [x] High-Fidelity UI/UX
-- [x] Advanced Search Logic
+- [x] Search Logic
 - [x] Admin Moderation Security
 - [ ] **Next Step**: MySQL Database Persistence (Member 4)
 - [ ] **Next Step**: Automated Email Notifications (Members 2/3)

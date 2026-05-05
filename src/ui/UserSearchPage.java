@@ -9,12 +9,12 @@ import javax.swing.*;
 import model.Donor;
 
 /**
- * Advanced Search Page with Proximity Weighting and Interactive Results.
+ * Search Page to find donors.
  * @author Emon Ahmed Joy
  */
 public class UserSearchPage extends JFrame {
     private JTextField bloodGroupField, stateField, locationField;
-    private JPanel resultsContainer;
+    private FadingPanel resultsContainer;
     private JScrollPane scrollPane;
 
     public UserSearchPage() {
@@ -63,7 +63,7 @@ public class UserSearchPage extends JFrame {
         mainPanel.add(searchPanel, BorderLayout.WEST);
 
         // Results Container (Right Side)
-        resultsContainer = new JPanel();
+        resultsContainer = new FadingPanel();
         resultsContainer.setLayout(new BoxLayout(resultsContainer, BoxLayout.Y_AXIS));
         resultsContainer.setBackground(Color.WHITE);
         
@@ -98,6 +98,9 @@ public class UserSearchPage extends JFrame {
         
         // Initial empty state
         resultsContainer.add(new JLabel("Enter criteria and click Search..."));
+
+        // Animation
+        bgPanel.fadeIn();
     }
 
     private void performSearch() {
@@ -136,6 +139,7 @@ public class UserSearchPage extends JFrame {
             }
         }
 
+        resultsContainer.fadeIn();
         resultsContainer.revalidate();
         resultsContainer.repaint();
     }

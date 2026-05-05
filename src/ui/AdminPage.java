@@ -9,7 +9,7 @@ import model.User;
 import model.BloodRequest;
 
 /**
- * Enhanced Admin Dashboard with Separated Role Management and Email Search.
+ * Admin Dashboard for managing users and requests.
  * @author Emon Ahmed Joy
  */
 public class AdminPage extends JFrame {
@@ -214,6 +214,6 @@ public class AdminPage extends JFrame {
                          "PATIENT: " + req.getPatientName() + "\n" +
                          "HOSPITAL: " + req.getHospitalName() + " (" + req.getLocation() + ")\n" +
                          "CONDITION: " + req.getMedicalCondition();
-        JOptionPane.showMessageDialog(this, details, "Blood Request Deep Dive", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, details, "Blood Request Details", JOptionPane.INFORMATION_MESSAGE);
     }
 }

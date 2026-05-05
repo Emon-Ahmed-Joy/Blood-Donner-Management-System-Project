@@ -25,16 +25,16 @@ public class DataStore {
         admins.add(new Admin("admin", "admin123"));
 
         // Sample Donors
-        Donor emon = new Donor("Emon Ahmed Joy", "emon@gmail.com", "pass123", "O+", "Dhaka", "Savar");
+        Donor emon = new Donor("Emon Ahmed Joy", "emon@gmail.com", "pass123", "O+", "Dhaka", "Savar", "None");
         users.add(emon);
         donors.add(emon);
 
-        Donor durjoy = new Donor("Durjoy", "durjoy@gmail.com", "pass456", "O-", "Dhaka", "Khagan");
+        Donor durjoy = new Donor("Durjoy", "durjoy@gmail.com", "pass456", "O-", "Dhaka", "Khagan", "None");
         users.add(durjoy);
         donors.add(durjoy);
 
         // Sample User
-        users.add(new User("Normal User", "user@gmail.com", "pass123", false));
+        users.add(new User("Normal User", "user@gmail.com", "pass123", "Chittagong", "Pahartali", false));
     }
 
     /**

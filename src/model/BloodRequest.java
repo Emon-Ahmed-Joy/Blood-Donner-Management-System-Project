@@ -3,7 +3,7 @@ package model;
 import java.util.Date;
 
 /**
- * Represents a blood request with detailed patient and hospital information.
+ * Represents a blood request.
  * @author Emon Ahmed Joy
  */
 public class BloodRequest {
@@ -14,7 +14,6 @@ public class BloodRequest {
     private Date requestDate;
     private String status; // "Pending", "Accepted", "Declined"
     
-    // New Detailed Fields
     private String patientName;
     private String hospitalName;
     private String location;
