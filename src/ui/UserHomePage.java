@@ -171,6 +171,7 @@ public class UserHomePage extends JFrame {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 currentUser.setPassword(newPass);
+                DataStore.updateUserPassword(currentUser); // ✅ DB te save
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");
                 dialog.dispose();
             }
@@ -210,6 +211,7 @@ public class UserHomePage extends JFrame {
             currentUser.setName(nameF.getText());
             currentUser.setState(stateF.getText());
             currentUser.setLocation(locF.getText());
+            DataStore.updateUserProfile(currentUser); // DB te save
             detailsLabel.setText("<html><b>Location:</b> " + currentUser.getLocation() + ", " + currentUser.getState() + "</html>");
             JOptionPane.showMessageDialog(dialog, "Profile updated successfully!");
             dialog.dispose();

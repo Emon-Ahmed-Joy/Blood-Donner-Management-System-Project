@@ -127,7 +127,6 @@ public class RegistrationPage extends JFrame {
         // Animation
         bgPanel.fadeIn();
     }
-
     private void handleRegistration() {
         String password = new String(passF.getPassword());
 
@@ -141,16 +140,15 @@ public class RegistrationPage extends JFrame {
                 return;
             }
 
-            // Upgrade Logic
             User oldUser = DataStore.currentUser;
-            Donor newDonor = new Donor(oldUser.getName(), oldUser.getEmail(), oldUser.getPassword(), 
-                                     groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
-            
-            // Swap in DataStore
+            Donor newDonor = new Donor(oldUser.getName(), oldUser.getEmail(), oldUser.getPassword(),
+                    groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
+
+            DataStore.upgradeUserToDonor(oldUser, newDonor); // DB te save
             DataStore.users.remove(oldUser);
             DataStore.users.add(newDonor);
             DataStore.donors.add(newDonor);
-            DataStore.currentUser = null; // Clear session for fresh login
+            DataStore.currentUser = null;
 
             JOptionPane.showMessageDialog(this, "Account Upgraded to Donor! Please login again.");
             new LoginPage().setVisible(true);
@@ -166,10 +164,12 @@ public class RegistrationPage extends JFrame {
 
             if (isDonorCheck.isSelected()) {
                 Donor newDonor = new Donor(name, email, password, groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
+                DataStore.saveUser(newDonor); // DB  te save
                 DataStore.users.add(newDonor);
                 DataStore.donors.add(newDonor);
             } else {
                 User newUser = new User(name, email, password, stateF.getText(), locF.getText(), false);
+                DataStore.saveUser(newUser); //DB te save
                 DataStore.users.add(newUser);
             }
 

@@ -174,6 +174,7 @@ public class DonorProfilePage extends JFrame {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 currentDonor.setPassword(newPass);
+                DataStore.updateUserPassword(currentDonor); // DB te save
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");
                 dialog.dispose();
             }
@@ -220,7 +221,6 @@ public class DonorProfilePage extends JFrame {
         RoundedButton saveBtn = new RoundedButton("Update My Info");
         gbc.gridy = r;
         dialog.add(saveBtn, gbc);
-
         saveBtn.addActionListener(e -> {
             currentDonor.setName(nameF.getText());
             currentDonor.setState(stateF.getText());
@@ -228,8 +228,9 @@ public class DonorProfilePage extends JFrame {
             currentDonor.setBloodGroup(groupF.getText());
             currentDonor.setMedicalCondition(medicalF.getText());
             currentDonor.setAvailable(availCheck.isSelected());
-            
-            // Refresh main view
+
+            DataStore.updateDonorProfile(currentDonor); // DB te save
+
             this.dispose();
             new DonorProfilePage(currentDonor).setVisible(true);
             JOptionPane.showMessageDialog(null, "Profile updated successfully!");

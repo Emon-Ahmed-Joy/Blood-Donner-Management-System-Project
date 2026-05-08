@@ -166,7 +166,8 @@ public class AdminPage extends JFrame {
         detailsBtn.addActionListener(e -> showUserDetails(user));
         blockBtn.addActionListener(e -> {
             user.setBlocked(!user.isBlocked());
-            refreshAllData(); // Refresh both tabs to reflect status change
+            DataStore.updateUserBlockStatus(user); // ✅ DB তে save করো
+            refreshAllData();
         });
 
         btnPanel.add(detailsBtn);

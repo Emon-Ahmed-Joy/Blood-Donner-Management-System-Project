@@ -224,9 +224,11 @@ public class UserSearchPage extends JFrame {
             String reqName = (DataStore.currentUser != null) ? DataStore.currentUser.getName() : "Guest";
 
             model.BloodRequest newRequest = new model.BloodRequest(
-                reqEmail, reqName, donor.getEmail(), donor.getBloodGroup(),
-                patientF.getText(), hospitalF.getText(), locationF.getText(), conditionA.getText()
+                    reqEmail, reqName, donor.getEmail(), donor.getBloodGroup(),
+                    patientF.getText(), hospitalF.getText(), locationF.getText(), conditionA.getText()
             );
+
+            DataStore.saveBloodRequest(newRequest); // DB te save
             DataStore.bloodRequests.add(newRequest);
 
             JOptionPane.showMessageDialog(dialog, "Request sent successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
