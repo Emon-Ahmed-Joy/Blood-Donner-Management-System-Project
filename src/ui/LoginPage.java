@@ -8,7 +8,7 @@ import model.Donor;
 import model.User;
 
 /**
- * Modernized Login Page with Rounded Components and Shadow Cards.
+ * Login Page for the application.
  * @author Emon Ahmed Joy
  */
 public class LoginPage extends JFrame {
@@ -25,9 +25,8 @@ public class LoginPage extends JFrame {
         GradientPanel mainPanel = new GradientPanel();
         JPanel card = GradientPanel.createCard(450, 580);
 
-        JLabel header = new JLabel("🩸 Blood Link", SwingConstants.CENTER);
-        header.setFont(new Font("SansSerif", Font.BOLD, 42));
-        header.setForeground(new Color(180, 0, 0));
+        JLabel header = new JLabel("<html><font color='#B40000'>&hearts;</font> Blood Link</html>", SwingConstants.CENTER);
+        header.setFont(new Font("Dialog", Font.BOLD, 42));
         card.add(header, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -38,6 +37,9 @@ public class LoginPage extends JFrame {
         card.add(tabbedPane, BorderLayout.CENTER);
         mainPanel.add(card);
         add(mainPanel);
+
+        // Animation
+        mainPanel.fadeIn();
     }
 
     private JPanel createUserPanel() {
