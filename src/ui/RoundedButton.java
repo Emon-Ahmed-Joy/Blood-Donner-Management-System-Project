@@ -7,14 +7,15 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.*;
 
 /**
- * A modern, rounded button with hover effects and gradients.
+ * A custom rounded button with hover effects.
  * @author Emon Ahmed Joy
  */
 public class RoundedButton extends JButton {
     private Color normalColor = new Color(180, 0, 0);
     private Color hoverColor = new Color(220, 20, 20);
-    private Color currentColor = normalColor;
-    private int radius = 25; // Increased for a more modern pill-shape
+    private float alpha = 0.0f; // 0.0 = normal, 1.0 = hover
+    private Timer fadeTimer;
+    private int radius = 25;
 
     public RoundedButton(String text) {
         super(text);
@@ -28,22 +29,34 @@ public class RoundedButton extends JButton {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                currentColor = hoverColor;
-                repaint();
+                startFade(true);
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                currentColor = normalColor;
-                repaint();
+                startFade(false);
             }
         });
+    }
+
+    private void startFade(boolean in) {
+        if (fadeTimer != null && fadeTimer.isRunning()) fadeTimer.stop();
+        fadeTimer = new Timer(15, e -> {
+            if (in) {
+                alpha += 0.1f;
+                if (alpha >= 1.0f) { alpha = 1.0f; fadeTimer.stop(); }
+            } else {
+                alpha -= 0.1f;
+                if (alpha <= 0.0f) { alpha = 0.0f; fadeTimer.stop(); }
+            }
+            repaint();
+        });
+        fadeTimer.start();
     }
 
     public RoundedButton(String text, Color baseColor, Color hoverColor) {
         this(text);
         this.normalColor = baseColor;
         this.hoverColor = hoverColor;
-        this.currentColor = normalColor;
     }
 
     @Override
@@ -51,6 +64,12 @@ public class RoundedButton extends JButton {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
+        // Interpolate colors
+        int r = (int) (normalColor.getRed() + alpha * (hoverColor.getRed() - normalColor.getRed()));
+        int g_val = (int) (normalColor.getGreen() + alpha * (hoverColor.getGreen() - normalColor.getGreen()));
+        int b = (int) (normalColor.getBlue() + alpha * (hoverColor.getBlue() - normalColor.getBlue()));
+        Color currentColor = new Color(r, g_val, b);
+
         // Dynamic Gradient
         Color color2 = currentColor.darker();
         GradientPaint gp = new GradientPaint(0, 0, currentColor, 0, getHeight(), color2);

@@ -8,7 +8,7 @@ import model.Donor;
 import model.User;
 
 /**
- * Modernized Login Page with Rounded Components and Shadow Cards.
+ * Login Page for the application.
  * @author Emon Ahmed Joy
  */
 public class LoginPage extends JFrame {
@@ -16,6 +16,7 @@ public class LoginPage extends JFrame {
     private JPasswordField userPasswordField, adminPasswordField;
 
     public LoginPage() {
+        DataStore.loadAll();
         setTitle("Blood Donor Management System - Login");
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -25,9 +26,8 @@ public class LoginPage extends JFrame {
         GradientPanel mainPanel = new GradientPanel();
         JPanel card = GradientPanel.createCard(450, 580);
 
-        JLabel header = new JLabel("🩸 Blood Link", SwingConstants.CENTER);
-        header.setFont(new Font("SansSerif", Font.BOLD, 42));
-        header.setForeground(new Color(180, 0, 0));
+        JLabel header = new JLabel("<html><font color='#B40000'>&hearts;</font> Blood Link</html>", SwingConstants.CENTER);
+        header.setFont(new Font("Dialog", Font.BOLD, 42));
         card.add(header, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -38,6 +38,9 @@ public class LoginPage extends JFrame {
         card.add(tabbedPane, BorderLayout.CENTER);
         mainPanel.add(card);
         add(mainPanel);
+
+        // Animation
+        mainPanel.fadeIn();
     }
 
     private JPanel createUserPanel() {
@@ -47,15 +50,23 @@ public class LoginPage extends JFrame {
         gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         panel.add(new JLabel("📧 Email Address:"), gbc);
-        gbc.gridx = 1; userEmailField = new JTextField(15); panel.add(userEmailField, gbc);
+        gbc.gridx = 1;
+        userEmailField = new JTextField(15);
+        panel.add(userEmailField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         panel.add(new JLabel("🔒 Password:"), gbc);
-        gbc.gridx = 1; userPasswordField = new JPasswordField(15); panel.add(userPasswordField, gbc);
+        gbc.gridx = 1;
+        userPasswordField = new JPasswordField(15);
+        panel.add(userPasswordField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
         RoundedButton loginBtn = new RoundedButton("🔑 Login to Account");
         panel.add(loginBtn, gbc);
 
@@ -79,15 +90,23 @@ public class LoginPage extends JFrame {
         gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         panel.add(new JLabel("🆔 Admin ID:"), gbc);
-        gbc.gridx = 1; adminIdField = new JTextField(15); panel.add(adminIdField, gbc);
+        gbc.gridx = 1;
+        adminIdField = new JTextField(15);
+        panel.add(adminIdField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         panel.add(new JLabel("🔒 Password:"), gbc);
-        gbc.gridx = 1; adminPasswordField = new JPasswordField(15); panel.add(adminPasswordField, gbc);
+        gbc.gridx = 1;
+        adminPasswordField = new JPasswordField(15);
+        panel.add(adminPasswordField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
         RoundedButton loginBtn = new RoundedButton("🛡️ System Login", new Color(30, 30, 30), new Color(60, 60, 60));
         panel.add(loginBtn, gbc);
 
@@ -104,9 +123,9 @@ public class LoginPage extends JFrame {
                     JOptionPane.showMessageDialog(this, "Your account has been blocked by the Administrator.", "Access Denied", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                DataStore.currentUser = user; // Track current session
+                DataStore.currentUser = user;
                 if (user instanceof Donor) {
-                    new DonorProfilePage((Donor)user).setVisible(true);
+                    new DonorProfilePage((Donor) user).setVisible(true);
                 } else {
                     new UserHomePage(user).setVisible(true);
                 }
@@ -122,6 +141,7 @@ public class LoginPage extends JFrame {
         String password = new String(adminPasswordField.getPassword());
         for (Admin admin : DataStore.admins) {
             if (admin.getAdminId().equals(id) && admin.getPassword().equals(password)) {
+                DataStore.loadAll();
                 new AdminPage().setVisible(true);
                 this.dispose();
                 return;
@@ -133,4 +153,5 @@ public class LoginPage extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LoginPage().setVisible(true));
     }
+
 }

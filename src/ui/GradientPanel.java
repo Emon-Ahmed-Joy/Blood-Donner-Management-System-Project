@@ -10,14 +10,15 @@ import java.util.Random;
 import javax.swing.*;
 
 /**
- * High-performance animated background panel.
- * Uses sub-pixel rendering for ultra-smooth movement.
+ * Animated background panel with gradient.
  * @author Emon Ahmed Joy
  */
 public class GradientPanel extends JPanel {
     private List<Particle> particles;
     private Timer timer;
     private final int PARTICLE_COUNT = 30;
+    private float globalAlpha = 1.0f;
+    private Timer fadeTimer;
 
     public GradientPanel() {
         setDoubleBuffered(true);
@@ -30,6 +31,20 @@ public class GradientPanel extends JPanel {
             repaint();
         });
         timer.start();
+    }
+
+    public void fadeIn() {
+        globalAlpha = 0.0f;
+        if (fadeTimer != null && fadeTimer.isRunning()) fadeTimer.stop();
+        fadeTimer = new Timer(30, e -> {
+            globalAlpha += 0.05f;
+            if (globalAlpha >= 1.0f) {
+                globalAlpha = 1.0f;
+                fadeTimer.stop();
+            }
+            repaint();
+        });
+        fadeTimer.start();
     }
 
     private void initParticles() {
@@ -83,6 +98,14 @@ public class GradientPanel extends JPanel {
 
         // Essential for smooth animation on some systems (Linux/Windows)
         Toolkit.getDefaultToolkit().sync();
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, globalAlpha));
+        super.paintChildren(g2d);
+        g2d.dispose();
     }
 
     private static class Particle {
