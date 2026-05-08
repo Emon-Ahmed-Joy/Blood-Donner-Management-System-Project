@@ -152,6 +152,12 @@ public class AdminPage extends JFrame {
 
         String role = isDonor ? "<font color='red'>&hearts;</font> [DONOR]" : "[USER]";
         String status = user.isBlocked() ? "<font color='red'>X BLOCKED</font>" : "<font color='green'>V ACTIVE</font>";
+        
+        if (isDonor && !user.isBlocked()) {
+            Donor d = (Donor) user;
+            status += d.isAvailable() ? " (Available)" : " <font color='orange'>(Busy)</font>";
+        }
+
         JLabel info = new JLabel("<html><b>" + role + " " + user.getName() + "</b><br>" + user.getEmail() + " | Status: " + status + "</html>");
         row.add(info, BorderLayout.CENTER);
 
@@ -198,10 +204,12 @@ public class AdminPage extends JFrame {
     private void showUserDetails(User user) {
         String details = "Name: " + user.getName() + "\n" +
                          "Email: " + user.getEmail() + "\n" +
-                         "Role: " + (user instanceof Donor ? "Donor" : "General User") + "\n";
+                         "Role: " + (user instanceof Donor ? "Donor" : "General User") + "\n" +
+                         "Account Status: " + (user.isBlocked() ? "Blocked" : "Active") + "\n";
         if (user instanceof Donor) {
             Donor d = (Donor) user;
-            details += "Blood Group: " + d.getBloodGroup() + "\n" +
+            details += "Donor Status: " + (d.isAvailable() ? "Available" : "Busy") + "\n" +
+                       "Blood Group: " + d.getBloodGroup() + "\n" +
                        "Location: " + d.getLocation() + ", " + d.getState() + "\n";
         }
         JOptionPane.showMessageDialog(this, details, "User Information", JOptionPane.INFORMATION_MESSAGE);
