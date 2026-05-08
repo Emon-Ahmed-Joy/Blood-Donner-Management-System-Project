@@ -35,6 +35,7 @@ public class UserHomePage extends JFrame {
         if (user.hasUpdate()) {
             JOptionPane.showMessageDialog(this, "(!) One of your blood requests has been updated!", "Request Update", JOptionPane.INFORMATION_MESSAGE);
             user.setHasUpdate(false);
+            DataStore.updateUser(user); // Clear notification flag in DB
         }
 
         // Main Content Area
@@ -171,6 +172,7 @@ public class UserHomePage extends JFrame {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 currentUser.setPassword(newPass);
+                DataStore.updateUser(currentUser);
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");
                 dialog.dispose();
             }
@@ -210,6 +212,7 @@ public class UserHomePage extends JFrame {
             currentUser.setName(nameF.getText());
             currentUser.setState(stateF.getText());
             currentUser.setLocation(locF.getText());
+            DataStore.updateUser(currentUser);
             detailsLabel.setText("<html><b>Location:</b> " + currentUser.getLocation() + ", " + currentUser.getState() + "</html>");
             JOptionPane.showMessageDialog(dialog, "Profile updated successfully!");
             dialog.dispose();

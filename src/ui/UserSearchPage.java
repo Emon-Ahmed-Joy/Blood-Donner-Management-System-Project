@@ -227,7 +227,7 @@ public class UserSearchPage extends JFrame {
                 reqEmail, reqName, donor.getEmail(), donor.getBloodGroup(),
                 patientF.getText(), hospitalF.getText(), locationF.getText(), conditionA.getText()
             );
-            DataStore.bloodRequests.add(newRequest);
+            DataStore.addBloodRequest(newRequest);
 
             JOptionPane.showMessageDialog(dialog, "Request sent successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             btn.setEnabled(false);

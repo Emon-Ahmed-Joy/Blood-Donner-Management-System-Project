@@ -82,6 +82,7 @@ public class AdminPage extends JFrame {
         goBtn.addActionListener(e -> refreshAllData());
         searchField.addActionListener(e -> refreshAllData());
         refreshBtn.addActionListener(e -> {
+            DataStore.loadDataFromDatabase();
             searchField.setText("");
             refreshAllData();
         });
@@ -172,6 +173,7 @@ public class AdminPage extends JFrame {
         detailsBtn.addActionListener(e -> showUserDetails(user));
         blockBtn.addActionListener(e -> {
             user.setBlocked(!user.isBlocked());
+            DataStore.updateUser(user);
             refreshAllData(); // Refresh both tabs to reflect status change
         });
 

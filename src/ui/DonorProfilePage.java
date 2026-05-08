@@ -36,6 +36,7 @@ public class DonorProfilePage extends JFrame {
         if (donor.hasUpdate()) {
             JOptionPane.showMessageDialog(this, "(!) You have update in your requests!", "System Notification", JOptionPane.INFORMATION_MESSAGE);
             donor.setHasUpdate(false);
+            DataStore.updateUser(donor); // Clear notification flag in DB
         }
 
         // Main Content
@@ -174,6 +175,7 @@ public class DonorProfilePage extends JFrame {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 currentDonor.setPassword(newPass);
+                DataStore.updateUser(currentDonor);
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");
                 dialog.dispose();
             }
@@ -228,6 +230,8 @@ public class DonorProfilePage extends JFrame {
             currentDonor.setBloodGroup(groupF.getText());
             currentDonor.setMedicalCondition(medicalF.getText());
             currentDonor.setAvailable(availCheck.isSelected());
+            
+            DataStore.updateUser(currentDonor);
             
             // Refresh main view
             this.dispose();
