@@ -16,6 +16,8 @@ public class UserSearchPage extends JFrame {
     private JTextField bloodGroupField, stateField, locationField;
     private FadingPanel resultsContainer;
     private JScrollPane scrollPane;
+    private final Font labelFont = new Font("Dialog", Font.BOLD, 18);
+    private final Font fieldFont = new Font("Dialog", Font.PLAIN, 20);
 
     public UserSearchPage() {
         setTitle("Search Blood Donors");
@@ -24,12 +26,13 @@ public class UserSearchPage extends JFrame {
         setLocationRelativeTo(null);
 
         GradientPanel bgPanel = new GradientPanel();
-        JPanel card = GradientPanel.createCard(1150, 600);
+        JPanel card = GradientPanel.createCard(1150, 650);
 
         // Header
-        JLabel title = new JLabel("<html><font color='#B40000'>&hearts;</font> Find a Life Saver</html>", SwingConstants.CENTER);
+        JLabel title = new JLabel("Find a Life Saver", SwingConstants.CENTER);
+        title.setIcon(new VectorIcon(VectorIcon.Type.HEART, 40, new Color(180, 0, 0)));
         title.setForeground(new Color(180, 0, 0));
-        title.setFont(new Font("Dialog", Font.BOLD, 28));
+        title.setFont(new Font("Dialog", Font.BOLD, 32));
         card.add(title, BorderLayout.NORTH);
 
         // Main Panel
@@ -39,25 +42,28 @@ public class UserSearchPage extends JFrame {
         // Search Form (Left Side)
         JPanel searchPanel = new JPanel(new GridBagLayout());
         searchPanel.setOpaque(false);
-        searchPanel.setBorder(BorderFactory.createTitledBorder("Search Criteria"));
+        searchPanel.setBorder(BorderFactory.createTitledBorder(null, "Search Criteria", 0, 0, labelFont));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        searchPanel.add(new JLabel("Blood Group:"), gbc);
-        gbc.gridx = 1; bloodGroupField = new JTextField(12); searchPanel.add(bloodGroupField, gbc);
+        int row = 0;
+        JLabel bgLbl = new JLabel("Blood Group:"); bgLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = row; searchPanel.add(bgLbl, gbc);
+        gbc.gridx = 1; bloodGroupField = new JTextField(12); bloodGroupField.setFont(fieldFont); searchPanel.add(bloodGroupField, gbc); row++;
 
-        gbc.gridx = 0; gbc.gridy = 1;
-        searchPanel.add(new JLabel("State:"), gbc);
-        gbc.gridx = 1; stateField = new JTextField(12); searchPanel.add(stateField, gbc);
+        JLabel stLbl = new JLabel("State:"); stLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = row; searchPanel.add(stLbl, gbc);
+        gbc.gridx = 1; stateField = new JTextField(12); stateField.setFont(fieldFont); searchPanel.add(stateField, gbc); row++;
 
-        gbc.gridx = 0; gbc.gridy = 2;
-        searchPanel.add(new JLabel("City/Location:"), gbc);
-        gbc.gridx = 1; locationField = new JTextField(12); searchPanel.add(locationField, gbc);
+        JLabel locLbl = new JLabel("City/Location:"); locLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = row; searchPanel.add(locLbl, gbc);
+        gbc.gridx = 1; locationField = new JTextField(12); locationField.setFont(fieldFont); searchPanel.add(locationField, gbc); row++;
 
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 2;
         RoundedButton searchBtn = new RoundedButton("Search Donors");
+        searchBtn.setIcon(new VectorIcon(VectorIcon.Type.SEARCH, 24, Color.WHITE));
+        searchBtn.setPreferredSize(new Dimension(200, 50));
         searchPanel.add(searchBtn, gbc);
 
         mainPanel.add(searchPanel, BorderLayout.WEST);
@@ -68,9 +74,8 @@ public class UserSearchPage extends JFrame {
         resultsContainer.setBackground(Color.WHITE);
         
         scrollPane = new JScrollPane(resultsContainer);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Available Donors (Sorted by Proximity)"));
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
+        optimizeScroll(scrollPane);
+        scrollPane.setBorder(BorderFactory.createTitledBorder(null, "Available Donors", 0, 0, labelFont));
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         card.add(mainPanel, BorderLayout.CENTER);
@@ -79,6 +84,7 @@ public class UserSearchPage extends JFrame {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setOpaque(false);
         RoundedButton backBtn = new RoundedButton("Back to Home", new Color(50, 50, 50), new Color(80, 80, 80));
+        backBtn.setPreferredSize(new Dimension(200, 45));
         bottomPanel.add(backBtn);
         card.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -97,10 +103,19 @@ public class UserSearchPage extends JFrame {
         add(bgPanel);
         
         // Initial empty state
-        resultsContainer.add(new JLabel("Enter criteria and click Search..."));
+        JLabel initLbl = new JLabel("Enter criteria and click Search...");
+        initLbl.setFont(labelFont);
+        resultsContainer.add(initLbl);
 
         // Animation
         bgPanel.fadeIn();
+    }
+
+    private void optimizeScroll(JScrollPane sp) {
+        sp.getVerticalScrollBar().setUnitIncrement(20);
+        sp.setBorder(null);
+        sp.getViewport().setOpaque(false);
+        sp.setOpaque(false);
     }
 
     private void performSearch() {
@@ -131,11 +146,13 @@ public class UserSearchPage extends JFrame {
         matched.sort(Comparator.comparingInt(m -> -m.score));
 
         if (matched.isEmpty()) {
-            resultsContainer.add(new JLabel("No donors found matching these criteria."));
+            JLabel noneLbl = new JLabel("No donors found matching these criteria.");
+            noneLbl.setFont(labelFont);
+            resultsContainer.add(noneLbl);
         } else {
             for (DonorMatch m : matched) {
                 resultsContainer.add(createDonorResultRow(m.donor));
-                resultsContainer.add(Box.createVerticalStrut(10));
+                resultsContainer.add(Box.createVerticalStrut(15));
             }
         }
 
@@ -146,8 +163,8 @@ public class UserSearchPage extends JFrame {
 
     private JPanel createDonorResultRow(Donor donor) {
         JPanel row = new JPanel(new BorderLayout(15, 0));
-        row.setMaximumSize(new Dimension(800, 90));
-        row.setPreferredSize(new Dimension(750, 90));
+        row.setMaximumSize(new Dimension(800, 110));
+        row.setPreferredSize(new Dimension(750, 110));
         row.setBackground(new Color(245, 245, 245));
         row.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
@@ -155,15 +172,15 @@ public class UserSearchPage extends JFrame {
         ));
 
         // Info Label
-        String info = "<html><b>" + donor.getName() + "</b> <font color='red'>(" + donor.getBloodGroup() + ")</font><br>" +
-                      donor.getLocation() + ", " + donor.getState() + "</html>";
+        String info = "<html><font size='5'><b>" + donor.getName() + "</b> <font color='red'>(" + donor.getBloodGroup() + ")</font><br>" +
+                      donor.getLocation() + ", " + donor.getState() + "</font></html>";
         JLabel infoLabel = new JLabel(info);
         infoLabel.setFont(new Font("Dialog", Font.PLAIN, 15));
         row.add(infoLabel, BorderLayout.CENTER);
 
         // Request Button
         RoundedButton requestBtn = new RoundedButton("Request Blood", new Color(180, 0, 0), new Color(220, 20, 20));
-        requestBtn.setPreferredSize(new Dimension(170, 40));
+        requestBtn.setPreferredSize(new Dimension(200, 50));
         row.add(requestBtn, BorderLayout.EAST);
 
         requestBtn.addActionListener(e -> showRequestForm(donor, requestBtn));
@@ -173,49 +190,60 @@ public class UserSearchPage extends JFrame {
 
     private void showRequestForm(Donor donor, RoundedButton btn) {
         JDialog dialog = new JDialog(this, "Finalize Blood Request", true);
-        dialog.setSize(450, 600);
+        dialog.setSize(550, 700);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 15, 10, 15);
+        gbc.insets = new Insets(15, 20, 15, 20);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Donor Info Header
         JPanel donorHeader = new JPanel(new GridLayout(2, 1));
-        donorHeader.setBorder(BorderFactory.createTitledBorder("Recipient Information"));
-        donorHeader.add(new JLabel("Donor: " + donor.getName() + " (" + donor.getBloodGroup() + ")"));
-        donorHeader.add(new JLabel("Location: " + donor.getLocation()));
+        donorHeader.setBorder(BorderFactory.createTitledBorder(null, "Recipient Information", 0, 0, labelFont));
+        JLabel dh1 = new JLabel("Donor: " + donor.getName() + " (" + donor.getBloodGroup() + ")");
+        dh1.setFont(labelFont);
+        donorHeader.add(dh1);
+        JLabel dh2 = new JLabel("Location: " + donor.getLocation());
+        dh2.setFont(labelFont);
+        donorHeader.add(dh2);
         
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         dialog.add(donorHeader, gbc);
         gbc.gridwidth = 1;
 
-        JTextField patientF = new JTextField();
-        JTextField hospitalF = new JTextField();
-        JTextField locationF = new JTextField();
-        JTextArea conditionA = new JTextArea(3, 20);
+        JTextField patientF = new JTextField(); patientF.setFont(fieldFont);
+        JTextField hospitalF = new JTextField(); hospitalF.setFont(fieldFont);
+        JTextField locationF = new JTextField(); locationF.setFont(fieldFont);
+        JTextArea conditionA = new JTextArea(4, 20);
         conditionA.setLineWrap(true);
+        conditionA.setFont(fieldFont);
         conditionA.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
         int r = 1;
-        gbc.gridx = 0; gbc.gridy = r++; dialog.add(new JLabel("Patient Name:"), gbc);
+        JLabel pLbl = new JLabel("Patient Name:"); pLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r++; dialog.add(pLbl, gbc);
         gbc.gridx = 1; dialog.add(patientF, gbc);
 
-        gbc.gridx = 0; gbc.gridy = r++; dialog.add(new JLabel("Hospital Name:"), gbc);
+        JLabel hLbl = new JLabel("Hospital Name:"); hLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r++; dialog.add(hLbl, gbc);
         gbc.gridx = 1; dialog.add(hospitalF, gbc);
 
-        gbc.gridx = 0; gbc.gridy = r++; dialog.add(new JLabel("Hospital Location:"), gbc);
+        JLabel hlLbl = new JLabel("Hospital Location:"); hlLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r++; dialog.add(hlLbl, gbc);
         gbc.gridx = 1; dialog.add(locationF, gbc);
 
-        gbc.gridx = 0; gbc.gridy = r++; dialog.add(new JLabel("Condition:"), gbc);
+        JLabel cLbl = new JLabel("Condition:"); cLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r++; dialog.add(cLbl, gbc);
         gbc.gridx = 1; dialog.add(new JScrollPane(conditionA), gbc);
 
         RoundedButton submitBtn = new RoundedButton("Send Emergency Request");
+        submitBtn.setPreferredSize(new Dimension(250, 50));
         gbc.gridx = 0; gbc.gridy = r++; gbc.gridwidth = 2;
         dialog.add(submitBtn, gbc);
 
         submitBtn.addActionListener(ev -> {
             if (patientF.getText().isEmpty() || hospitalF.getText().isEmpty()) {
+                UIManager.put("OptionPane.messageFont", labelFont);
                 JOptionPane.showMessageDialog(dialog, "Please fill required fields.", "Warning", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -229,6 +257,7 @@ public class UserSearchPage extends JFrame {
             );
             DataStore.addBloodRequest(newRequest);
 
+            UIManager.put("OptionPane.messageFont", labelFont);
             JOptionPane.showMessageDialog(dialog, "Request sent successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             btn.setEnabled(false);
             btn.setText("Requested");

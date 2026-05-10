@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS blood_requests (
     medical_condition TEXT,
     request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'Pending',
-    FOREIGN KEY (requester_email) REFERENCES users(email),
-    FOREIGN KEY (donor_email) REFERENCES users(email)
+    FOREIGN KEY (requester_email) REFERENCES users(email) ON DELETE CASCADE,
+    FOREIGN KEY (donor_email) REFERENCES users(email) ON DELETE CASCADE
 );
 
 -- Insert initial sample data

@@ -15,73 +15,94 @@ public class RegistrationPage extends JFrame {
     private JPasswordField passF;
     private JCheckBox isDonorCheck;
     private boolean isUpgradeMode = false;
+    private final Font labelFont = new Font("Dialog", Font.BOLD, 18);
+    private final Font fieldFont = new Font("Dialog", Font.PLAIN, 20);
 
     public RegistrationPage() {
         this.isUpgradeMode = (DataStore.currentUser != null);
         
         setTitle(isUpgradeMode ? "Upgrade to Donor Account" : "Create New Account");
-        setSize(1280, 720);
+        setSize(1280, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         GradientPanel bgPanel = new GradientPanel();
-        JPanel card = GradientPanel.createCard(600, 680);
+        JPanel card = GradientPanel.createCard(800, 750);
 
         // Header
         JLabel title = new JLabel(isUpgradeMode ? "Become a Life Saver" : "Join Our Community", SwingConstants.CENTER);
+        title.setIcon(new VectorIcon(VectorIcon.Type.HEART, 40, new Color(180, 0, 0)));
         title.setForeground(new Color(180, 0, 0));
-        title.setFont(new Font("Dialog", Font.BOLD, 28));
+        title.setFont(new Font("Dialog", Font.BOLD, 32));
         card.add(title, BorderLayout.NORTH);
 
         // Form
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 10, 8, 10);
+        gbc.insets = new Insets(10, 15, 10, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         int r = 0;
         if (!isUpgradeMode) {
             gbc.gridx = 0; gbc.gridy = r;
-            formPanel.add(new JLabel("Full Name:"), gbc);
-            gbc.gridx = 1; nameF = new JTextField(20); formPanel.add(nameF, gbc); r++;
+            JLabel nl = new JLabel("Full Name:");
+            nl.setIcon(new VectorIcon(VectorIcon.Type.USER, 22));
+            nl.setFont(labelFont);
+            formPanel.add(nl, gbc);
+            gbc.gridx = 1; nameF = new JTextField(25); nameF.setFont(fieldFont); formPanel.add(nameF, gbc); r++;
 
             gbc.gridx = 0; gbc.gridy = r;
-            formPanel.add(new JLabel("Email:"), gbc);
-            gbc.gridx = 1; emailF = new JTextField(20); formPanel.add(emailF, gbc); r++;
+            JLabel el = new JLabel("Email:");
+            el.setIcon(new VectorIcon(VectorIcon.Type.EMAIL, 22));
+            el.setFont(labelFont);
+            formPanel.add(el, gbc);
+            gbc.gridx = 1; emailF = new JTextField(25); emailF.setFont(fieldFont); formPanel.add(emailF, gbc); r++;
         }
 
         gbc.gridx = 0; gbc.gridy = r;
-        formPanel.add(new JLabel(isUpgradeMode ? "Confirm Password:" : "Password:"), gbc);
-        gbc.gridx = 1; passF = new JPasswordField(20); formPanel.add(passF, gbc); r++;
+        JLabel pl = new JLabel(isUpgradeMode ? "Confirm Password:" : "Password:");
+        pl.setIcon(new VectorIcon(VectorIcon.Type.LOCK, 22));
+        pl.setFont(labelFont);
+        formPanel.add(pl, gbc);
+        gbc.gridx = 1; passF = new JPasswordField(25); passF.setFont(fieldFont); formPanel.add(passF, gbc); r++;
 
         if (!isUpgradeMode) {
             gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2;
             isDonorCheck = new JCheckBox("Register as a Blood Donor?");
             isDonorCheck.setOpaque(false);
-            isDonorCheck.setFont(new Font("Dialog", Font.BOLD, 14));
+            isDonorCheck.setFont(new Font("Dialog", Font.BOLD, 18));
             formPanel.add(isDonorCheck, gbc); r++;
             gbc.gridwidth = 1;
         }
 
         // Donor specific fields
         gbc.gridx = 0; gbc.gridy = r;
-        formPanel.add(new JLabel("Blood Group:"), gbc);
-        gbc.gridx = 1; groupF = new JTextField(20); formPanel.add(groupF, gbc); r++;
+        JLabel gl = new JLabel("Blood Group:");
+        gl.setIcon(new VectorIcon(VectorIcon.Type.HEART, 22, Color.RED));
+        gl.setFont(labelFont);
+        formPanel.add(gl, gbc);
+        gbc.gridx = 1; groupF = new JTextField(25); groupF.setFont(fieldFont); formPanel.add(groupF, gbc); r++;
 
         gbc.gridx = 0; gbc.gridy = r;
-        formPanel.add(new JLabel("Medical Condition:"), gbc);
-        gbc.gridx = 1; medicalF = new JTextField(20); formPanel.add(medicalF, gbc); r++;
+        JLabel ml = new JLabel("Medical Condition:");
+        ml.setFont(labelFont);
+        formPanel.add(ml, gbc);
+        gbc.gridx = 1; medicalF = new JTextField(25); medicalF.setFont(fieldFont); formPanel.add(medicalF, gbc); r++;
 
         gbc.gridx = 0; gbc.gridy = r;
-        formPanel.add(new JLabel("State:"), gbc);
-        gbc.gridx = 1; stateF = new JTextField(20); 
+        JLabel sl = new JLabel("State:");
+        sl.setFont(labelFont);
+        formPanel.add(sl, gbc);
+        gbc.gridx = 1; stateF = new JTextField(25); stateF.setFont(fieldFont);
         if (isUpgradeMode) stateF.setText(DataStore.currentUser.getState());
         formPanel.add(stateF, gbc); r++;
 
         gbc.gridx = 0; gbc.gridy = r;
-        formPanel.add(new JLabel("Location:"), gbc);
-        gbc.gridx = 1; locF = new JTextField(20); 
+        JLabel ll = new JLabel("Location:");
+        ll.setFont(labelFont);
+        formPanel.add(ll, gbc);
+        gbc.gridx = 1; locF = new JTextField(25); locF.setFont(fieldFont);
         if (isUpgradeMode) locF.setText(DataStore.currentUser.getLocation());
         formPanel.add(locF, gbc); r++;
 
@@ -90,10 +111,12 @@ public class RegistrationPage extends JFrame {
         // Bottom Buttons
         JPanel btnPanel = new JPanel();
         btnPanel.setOpaque(false);
-        JButton regBtn = new RoundedButton(isUpgradeMode ? "Confirm Upgrade" : "Register Now");
+        RoundedButton regBtn = new RoundedButton(isUpgradeMode ? "Confirm Upgrade" : "Register Now");
+        regBtn.setPreferredSize(new Dimension(220, 50));
         
         String backText = isUpgradeMode ? "Back to Home" : "Back to Login";
-        JButton backBtn = new RoundedButton(backText, new Color(50, 50, 50), new Color(80, 80, 80));
+        RoundedButton backBtn = new RoundedButton(backText, new Color(50, 50, 50), new Color(80, 80, 80));
+        backBtn.setPreferredSize(new Dimension(220, 50));
         
         btnPanel.add(regBtn);
         btnPanel.add(backBtn);
@@ -129,22 +152,22 @@ public class RegistrationPage extends JFrame {
     }
 
     private void handleRegistration() {
-        String password = new String(passF.getPassword());
+        String password = new String(passF.getPassword()).trim();
 
         if (isUpgradeMode) {
             if (!password.equals(DataStore.currentUser.getPassword())) {
                 JOptionPane.showMessageDialog(this, "Incorrect password confirmation!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            if (groupF.getText().isEmpty()) {
+            if (groupF.getText().trim().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please enter your blood group.");
                 return;
             }
 
             // Upgrade Logic
             User oldUser = DataStore.currentUser;
-            Donor newDonor = new Donor(oldUser.getName(), oldUser.getEmail(), oldUser.getPassword(), 
-                                     groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
+            Donor newDonor = new Donor(oldUser.getName().trim(), oldUser.getEmail().trim(), oldUser.getPassword().trim(), 
+                                     groupF.getText().trim(), stateF.getText().trim(), locF.getText().trim(), medicalF.getText().trim());
             
             // Persist changes
             DataStore.deleteUser(oldUser);
@@ -156,18 +179,18 @@ public class RegistrationPage extends JFrame {
             this.dispose();
 
         } else {
-            String name = nameF.getText();
-            String email = emailF.getText();
+            String name = nameF.getText().trim();
+            String email = emailF.getText().trim();
             if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please fill basic details.");
                 return;
             }
 
             if (isDonorCheck.isSelected()) {
-                Donor newDonor = new Donor(name, email, password, groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
+                Donor newDonor = new Donor(name, email, password, groupF.getText().trim(), stateF.getText().trim(), locF.getText().trim(), medicalF.getText().trim());
                 DataStore.addUser(newDonor);
             } else {
-                User newUser = new User(name, email, password, stateF.getText(), locF.getText(), false);
+                User newUser = new User(name, email, password, stateF.getText().trim(), locF.getText().trim(), false);
                 DataStore.addUser(newUser);
             }
 

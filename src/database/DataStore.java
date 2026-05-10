@@ -211,11 +211,18 @@ public class DataStore {
         String query = "DELETE FROM users WHERE email=?";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, u.getEmail());
-            pstmt.executeUpdate();
-            users.remove(u);
-            if (u instanceof Donor) donors.remove((Donor) u);
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                // Remove from local cache using email to ensure match
+                users.removeIf(user -> user.getEmail().equals(u.getEmail()));
+                donors.removeIf(donor -> donor.getEmail().equals(u.getEmail()));
+                javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " has been permanently deleted.");
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(null, "Failed to delete user: User not found in database.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(null, "Database Error during deletion: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
 }

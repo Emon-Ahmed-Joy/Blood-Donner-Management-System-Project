@@ -15,6 +15,8 @@ public class DonorProfilePage extends JFrame {
     private JPanel incomingContainer;
     private JPanel sentContainer;
     private JLabel statusLabel;
+    private final Font labelFont = new Font("Dialog", Font.BOLD, 18);
+    private final Font detailFont = new Font("Dialog", Font.PLAIN, 20);
 
     public DonorProfilePage(Donor donor) {
         this.currentDonor = donor;
@@ -24,16 +26,17 @@ public class DonorProfilePage extends JFrame {
         setLocationRelativeTo(null);
 
         GradientPanel bgPanel = new GradientPanel();
-        JPanel card = GradientPanel.createCard(1050, 600);
+        JPanel card = GradientPanel.createCard(1100, 650);
 
         // Header
         JLabel titleLabel = new JLabel("Donor Dashboard", SwingConstants.CENTER);
         titleLabel.setForeground(new Color(180, 0, 0));
-        titleLabel.setFont(new Font("Dialog", Font.BOLD, 28));
+        titleLabel.setFont(new Font("Dialog", Font.BOLD, 32));
         card.add(titleLabel, BorderLayout.NORTH);
 
         // Notification Check
         if (donor.hasUpdate()) {
+            UIManager.put("OptionPane.messageFont", labelFont);
             JOptionPane.showMessageDialog(this, "(!) You have update in your requests!", "System Notification", JOptionPane.INFORMATION_MESSAGE);
             donor.setHasUpdate(false);
             DataStore.updateUser(donor); // Clear notification flag in DB
@@ -47,7 +50,7 @@ public class DonorProfilePage extends JFrame {
         JPanel detailsPanel = new JPanel();
         detailsPanel.setOpaque(false);
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-        detailsPanel.setBorder(BorderFactory.createTitledBorder("My Account Details"));
+        detailsPanel.setBorder(BorderFactory.createTitledBorder(null, "My Account Details", 0, 0, labelFont));
 
         detailsPanel.add(createDetailLabel("Name: " + donor.getName()));
         detailsPanel.add(createDetailLabel("Email: " + donor.getEmail()));
@@ -56,29 +59,32 @@ public class DonorProfilePage extends JFrame {
         
         statusLabel = createDetailLabel("Status: " + (donor.isAvailable() ? "Available" : "Busy"));
         detailsPanel.add(statusLabel);
-        detailsPanel.add(Box.createVerticalStrut(10));
+        detailsPanel.add(Box.createVerticalStrut(20));
 
         // Standard size for all navigation buttons
-        Dimension btnSize = new Dimension(220, 45);
-        Font btnFont = new Font("Dialog", Font.BOLD, 14);
+        Dimension btnSize = new Dimension(280, 55);
+        Font btnFont = new Font("Dialog", Font.BOLD, 18);
 
-        RoundedButton editProfileBtn = new RoundedButton("✏️ Edit My Profile", new Color(180, 0, 0), new Color(220, 20, 20));
+        RoundedButton editProfileBtn = new RoundedButton("Edit My Profile", new Color(180, 0, 0), new Color(220, 20, 20));
+        editProfileBtn.setIcon(new VectorIcon(VectorIcon.Type.EDIT, 22, Color.WHITE));
         editProfileBtn.setPreferredSize(btnSize);
         editProfileBtn.setMaximumSize(btnSize);
         editProfileBtn.setFont(btnFont);
         editProfileBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         detailsPanel.add(editProfileBtn);
-        detailsPanel.add(Box.createVerticalStrut(10));
+        detailsPanel.add(Box.createVerticalStrut(15));
 
-        RoundedButton changePassBtn = new RoundedButton("🔒 Change Password", new Color(180, 0, 0), new Color(220, 20, 20));
+        RoundedButton changePassBtn = new RoundedButton("Change Password", new Color(180, 0, 0), new Color(220, 20, 20));
+        changePassBtn.setIcon(new VectorIcon(VectorIcon.Type.LOCK, 22, Color.WHITE));
         changePassBtn.setPreferredSize(btnSize);
         changePassBtn.setMaximumSize(btnSize);
         changePassBtn.setFont(btnFont);
         changePassBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         detailsPanel.add(changePassBtn);
-        detailsPanel.add(Box.createVerticalStrut(10));
+        detailsPanel.add(Box.createVerticalStrut(15));
 
-        RoundedButton searchBtn = new RoundedButton("🔍 Search for Donors", new Color(180, 0, 0), new Color(220, 20, 20));
+        RoundedButton searchBtn = new RoundedButton("Search for Donors", new Color(180, 0, 0), new Color(220, 20, 20));
+        searchBtn.setIcon(new VectorIcon(VectorIcon.Type.SEARCH, 22, Color.WHITE));
         searchBtn.setPreferredSize(btnSize);
         searchBtn.setMaximumSize(btnSize);
         searchBtn.setFont(btnFont);
@@ -87,19 +93,23 @@ public class DonorProfilePage extends JFrame {
 
         // Right Side: Tabbed Requests
         JTabbedPane tabs = new JTabbedPane();
-        tabs.setFont(new Font("Dialog", Font.BOLD, 14));
+        tabs.setFont(new Font("Dialog", Font.BOLD, 18));
 
         // Incoming Tab
         incomingContainer = new JPanel();
         incomingContainer.setLayout(new BoxLayout(incomingContainer, BoxLayout.Y_AXIS));
         incomingContainer.setBackground(Color.WHITE);
-        tabs.addTab("Incoming Requests", new JScrollPane(incomingContainer));
+        JScrollPane inScroll = new JScrollPane(incomingContainer);
+        optimizeScroll(inScroll);
+        tabs.addTab("Incoming Requests", inScroll);
 
         // Outgoing Tab
         sentContainer = new JPanel();
         sentContainer.setLayout(new BoxLayout(sentContainer, BoxLayout.Y_AXIS));
         sentContainer.setBackground(Color.WHITE);
-        tabs.addTab("Outgoing Requests", new JScrollPane(sentContainer));
+        JScrollPane outScroll = new JScrollPane(sentContainer);
+        optimizeScroll(outScroll);
+        tabs.addTab("Outgoing Requests", outScroll);
 
         mainContent.add(detailsPanel);
         mainContent.add(tabs);
@@ -109,6 +119,7 @@ public class DonorProfilePage extends JFrame {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setOpaque(false);
         RoundedButton logoutBtn = new RoundedButton("Logout Account", new Color(50, 50, 50), new Color(80, 80, 80));
+        logoutBtn.setPreferredSize(new Dimension(200, 45));
         bottomPanel.add(logoutBtn);
         card.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -135,38 +146,60 @@ public class DonorProfilePage extends JFrame {
         bgPanel.fadeIn();
     }
 
+    private void optimizeScroll(JScrollPane sp) {
+        sp.getVerticalScrollBar().setUnitIncrement(20);
+        sp.setBorder(null);
+        sp.getViewport().setOpaque(false);
+        sp.setOpaque(false);
+    }
+
     private void showChangePasswordDialog() {
         JDialog dialog = new JDialog(this, "Change Password", true);
-        dialog.setSize(400, 300);
+        dialog.setSize(500, 450); // Optimized compact width
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPasswordField oldPassF = new JPasswordField(20);
         JPasswordField newPassF = new JPasswordField(20);
         JPasswordField confirmPassF = new JPasswordField(20);
+        
+        oldPassF.setFont(detailFont);
+        newPassF.setFont(detailFont);
+        confirmPassF.setFont(detailFont);
 
         int r = 0;
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("Current Password:"), gbc);
-        gbc.gridx = 1; dialog.add(oldPassF, gbc); r++;
+        gbc.gridx = 0; gbc.gridy = r; gbc.weightx = 0.3;
+        JLabel lbl1 = new JLabel("Current:"); lbl1.setFont(labelFont);
+        dialog.add(lbl1, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        dialog.add(oldPassF, gbc); r++;
 
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("New Password:"), gbc);
-        gbc.gridx = 1; dialog.add(newPassF, gbc); r++;
+        gbc.gridx = 0; gbc.gridy = r; gbc.weightx = 0.3;
+        JLabel lbl2 = new JLabel("New:"); lbl2.setFont(labelFont);
+        dialog.add(lbl2, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        dialog.add(newPassF, gbc); r++;
 
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("Confirm Password:"), gbc);
-        gbc.gridx = 1; dialog.add(confirmPassF, gbc); r++;
+        gbc.gridx = 0; gbc.gridy = r; gbc.weightx = 0.3;
+        JLabel lbl3 = new JLabel("Confirm:"); lbl3.setFont(labelFont);
+        dialog.add(lbl3, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        dialog.add(confirmPassF, gbc); r++;
 
         RoundedButton updateBtn = new RoundedButton("Update Password");
-        gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2;
+        updateBtn.setPreferredSize(new Dimension(200, 50));
+        gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2; gbc.weightx = 1.0;
         dialog.add(updateBtn, gbc);
 
         updateBtn.addActionListener(e -> {
-            String oldPass = new String(oldPassF.getPassword());
-            String newPass = new String(newPassF.getPassword());
-            String confirmPass = new String(confirmPassF.getPassword());
+            String oldPass = new String(oldPassF.getPassword()).trim();
+            String newPass = new String(newPassF.getPassword()).trim();
+            String confirmPass = new String(confirmPassF.getPassword()).trim();
 
+            UIManager.put("OptionPane.messageFont", labelFont);
             if (!oldPass.equals(currentDonor.getPassword())) {
                 JOptionPane.showMessageDialog(dialog, "Incorrect current password!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (newPass.isEmpty()) {
@@ -186,11 +219,11 @@ public class DonorProfilePage extends JFrame {
 
     private void showEditProfileDialog() {
         JDialog dialog = new JDialog(this, "Edit Profile Details", true);
-        dialog.setSize(400, 500);
+        dialog.setSize(550, 650);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JTextField nameF = new JTextField(currentDonor.getName());
@@ -200,35 +233,48 @@ public class DonorProfilePage extends JFrame {
         JTextField medicalF = new JTextField(currentDonor.getMedicalCondition());
         JCheckBox availCheck = new JCheckBox("Available for Donation", currentDonor.isAvailable());
 
+        nameF.setFont(detailFont);
+        stateF.setFont(detailFont);
+        locF.setFont(detailFont);
+        groupF.setFont(detailFont);
+        medicalF.setFont(detailFont);
+        availCheck.setFont(labelFont);
+
         int r = 0;
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("Full Name:"), gbc);
+        JLabel l1 = new JLabel("Full Name:"); l1.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r; dialog.add(l1, gbc);
         gbc.gridx = 1; dialog.add(nameF, gbc); r++;
 
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("State:"), gbc);
+        JLabel l2 = new JLabel("State:"); l2.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r; dialog.add(l2, gbc);
         gbc.gridx = 1; dialog.add(stateF, gbc); r++;
 
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("City/Location:"), gbc);
+        JLabel l3 = new JLabel("City/Location:"); l3.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r; dialog.add(l3, gbc);
         gbc.gridx = 1; dialog.add(locF, gbc); r++;
 
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("Blood Group:"), gbc);
+        JLabel l4 = new JLabel("Blood Group:"); l4.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r; dialog.add(l4, gbc);
         gbc.gridx = 1; dialog.add(groupF, gbc); r++;
 
-        gbc.gridx = 0; gbc.gridy = r; dialog.add(new JLabel("Medical Condition:"), gbc);
+        JLabel l5 = new JLabel("Medical Condition:"); l5.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r; dialog.add(l5, gbc);
         gbc.gridx = 1; dialog.add(medicalF, gbc); r++;
 
         gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2;
         dialog.add(availCheck, gbc); r++;
 
         RoundedButton saveBtn = new RoundedButton("Update My Info");
+        saveBtn.setPreferredSize(new Dimension(200, 50));
         gbc.gridy = r;
         dialog.add(saveBtn, gbc);
 
         saveBtn.addActionListener(e -> {
-            currentDonor.setName(nameF.getText());
-            currentDonor.setState(stateF.getText());
-            currentDonor.setLocation(locF.getText());
-            currentDonor.setBloodGroup(groupF.getText());
-            currentDonor.setMedicalCondition(medicalF.getText());
+            currentDonor.setName(nameF.getText().trim());
+            currentDonor.setState(stateF.getText().trim());
+            currentDonor.setLocation(locF.getText().trim());
+            currentDonor.setBloodGroup(groupF.getText().trim());
+            currentDonor.setMedicalCondition(medicalF.getText().trim());
             currentDonor.setAvailable(availCheck.isSelected());
             
             DataStore.updateUser(currentDonor);
@@ -236,6 +282,7 @@ public class DonorProfilePage extends JFrame {
             // Refresh main view
             this.dispose();
             new DonorProfilePage(currentDonor).setVisible(true);
+            UIManager.put("OptionPane.messageFont", labelFont);
             JOptionPane.showMessageDialog(null, "Profile updated successfully!");
         });
 
@@ -254,13 +301,14 @@ public class DonorProfilePage extends JFrame {
         for (BloodRequest req : DataStore.bloodRequests) {
             if (req.getDonorEmail().equals(currentDonor.getEmail())) {
                 incomingContainer.add(createIncomingRow(req));
-                incomingContainer.add(Box.createVerticalStrut(10));
+                incomingContainer.add(Box.createVerticalStrut(15));
                 hasRequests = true;
             }
         }
 
         if (!hasRequests) {
             JLabel emptyLabel = new JLabel("No incoming requests.", SwingConstants.CENTER);
+            emptyLabel.setFont(labelFont);
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             incomingContainer.add(emptyLabel);
         }
@@ -276,13 +324,14 @@ public class DonorProfilePage extends JFrame {
         for (BloodRequest req : DataStore.bloodRequests) {
             if (req.getRequesterEmail().equals(currentDonor.getEmail())) {
                 sentContainer.add(createSentRow(req));
-                sentContainer.add(Box.createVerticalStrut(10));
+                sentContainer.add(Box.createVerticalStrut(15));
                 hasRequests = true;
             }
         }
 
         if (!hasRequests) {
             JLabel emptyLabel = new JLabel("No sent requests yet.", SwingConstants.CENTER);
+            emptyLabel.setFont(labelFont);
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             sentContainer.add(emptyLabel);
         }
@@ -293,8 +342,8 @@ public class DonorProfilePage extends JFrame {
 
     private JPanel createIncomingRow(BloodRequest req) {
         JPanel row = new JPanel(new BorderLayout(10, 0));
-        row.setMaximumSize(new Dimension(500, 110));
-        row.setPreferredSize(new Dimension(450, 110));
+        row.setMaximumSize(new Dimension(550, 140));
+        row.setPreferredSize(new Dimension(500, 140));
         row.setBackground(new Color(245, 245, 245));
         row.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
@@ -304,8 +353,8 @@ public class DonorProfilePage extends JFrame {
         // Info
         String statusIcon = req.getStatus().equals("Accepted") ? "V" : req.getStatus().equals("Declined") ? "X" : "?";
         String statusColor = req.getStatus().equals("Accepted") ? "green" : req.getStatus().equals("Declined") ? "red" : "black";
-        String info = "<html><b>From: " + req.getRequesterName() + "</b><br>" +
-                      "Status: " + statusIcon + " <font color='" + statusColor + "'>" + req.getStatus() + "</font></html>";
+        String info = "<html><font size='5'><b>From: " + req.getRequesterName() + "</b><br>" +
+                      "Status: " + statusIcon + " <font color='" + statusColor + "'>" + req.getStatus() + "</font></font></html>";
         JLabel infoLabel = new JLabel(info);
         row.add(infoLabel, BorderLayout.CENTER);
 
@@ -314,15 +363,21 @@ public class DonorProfilePage extends JFrame {
             JPanel btnPanel = new JPanel(new GridLayout(3, 1, 5, 5));
             btnPanel.setOpaque(false);
             
-            RoundedButton detailsBtn = new RoundedButton("View Details", new Color(50, 50, 50), new Color(80, 80, 80));
+            RoundedButton detailsBtn = new RoundedButton("Details", new Color(50, 50, 50), new Color(80, 80, 80));
             RoundedButton acceptBtn = new RoundedButton("Accept", new Color(40, 167, 69), new Color(33, 136, 56));
             RoundedButton declineBtn = new RoundedButton("Decline", new Color(220, 53, 69), new Color(200, 35, 51));
             
+            Dimension sBtnSize = new Dimension(110, 35);
+            detailsBtn.setPreferredSize(sBtnSize);
+            acceptBtn.setPreferredSize(sBtnSize);
+            declineBtn.setPreferredSize(sBtnSize);
+
             detailsBtn.addActionListener(e -> showRequestDetails(req));
 
             acceptBtn.addActionListener(e -> {
                 database.DataStore.updateRequestStatus(req, "Accepted");
                 refreshAllRequests();
+                UIManager.put("OptionPane.messageFont", labelFont);
                 JOptionPane.showMessageDialog(this, "Success: You have accepted the request.");
             });
             
@@ -342,13 +397,14 @@ public class DonorProfilePage extends JFrame {
 
     private JPanel createSentRow(BloodRequest req) {
         JPanel row = new JPanel(new BorderLayout());
-        row.setMaximumSize(new Dimension(500, 70));
+        row.setMaximumSize(new Dimension(550, 90));
+        row.setPreferredSize(new Dimension(500, 90));
         row.setBackground(new Color(245, 245, 245));
-        row.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        row.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
         String statusIcon = req.getStatus().equals("Accepted") ? "V" : req.getStatus().equals("Declined") ? "X" : "?";
         String statusColor = req.getStatus().equals("Accepted") ? "green" : req.getStatus().equals("Declined") ? "red" : "blue";
-        String info = "<html>" + statusIcon + " Request to: " + req.getDonorEmail() + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></html>";
+        String info = "<html><font size='5'>" + statusIcon + " Request to: " + req.getDonorEmail() + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></font></html>";
         
         row.add(new JLabel(info), BorderLayout.CENTER);
         return row;
@@ -359,12 +415,13 @@ public class DonorProfilePage extends JFrame {
                      "Patient: " + req.getPatientName() + "\n" +
                      "Location: " + req.getLocation() + "\n" +
                      "Condition: " + req.getMedicalCondition();
+        UIManager.put("OptionPane.messageFont", labelFont);
         JOptionPane.showMessageDialog(this, msg, "Request Details", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private JLabel createDetailLabel(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(new Font("Dialog", Font.PLAIN, 18));
+        label.setFont(new Font("Dialog", Font.PLAIN, 20));
         label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         return label;
     }
