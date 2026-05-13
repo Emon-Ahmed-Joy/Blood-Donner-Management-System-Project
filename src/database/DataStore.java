@@ -7,7 +7,7 @@ import model.*;
 
 /**
  * Data store for the application, backed by a MySQL database.
- * @author Emon Ahmed Joy
+ * @author Naimur Rahman Durjoy
  */
 public class DataStore {
     public static List<User> users = new ArrayList<>();
@@ -208,21 +208,50 @@ public class DataStore {
     }
 
     public static void deleteUser(User u) {
-        String query = "DELETE FROM users WHERE email=?";
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, u.getEmail());
-            int rows = pstmt.executeUpdate();
-            if (rows > 0) {
-                // Remove from local cache using email to ensure match
-                users.removeIf(user -> user.getEmail().equals(u.getEmail()));
-                donors.removeIf(donor -> donor.getEmail().equals(u.getEmail()));
-                javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " has been permanently deleted.");
-            } else {
-                javax.swing.JOptionPane.showMessageDialog(null, "Failed to delete user: User not found in database.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        String deleteRequestsQuery = "DELETE FROM blood_requests WHERE requester_email=? OR donor_email=?";
+        String deleteUserQuery = "DELETE FROM users WHERE email=?";
+        
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false); // Start transaction
+            
+            try {
+                // 1. Manually delete related blood requests to avoid FK issues
+                try (PreparedStatement pstmt1 = conn.prepareStatement(deleteRequestsQuery)) {
+                    pstmt1.setString(1, u.getEmail());
+                    pstmt1.setString(2, u.getEmail());
+                    pstmt1.executeUpdate();
+                }
+
+                // 2. Delete the user
+                try (PreparedStatement pstmt2 = conn.prepareStatement(deleteUserQuery)) {
+                    pstmt2.setString(1, u.getEmail());
+                    int rows = pstmt2.executeUpdate();
+                    
+                    if (rows > 0) {
+                        conn.commit(); // Success
+                        
+                        // Remove from local caches
+                        users.removeIf(user -> user.getEmail().equalsIgnoreCase(u.getEmail()));
+                        donors.removeIf(donor -> donor.getEmail().equalsIgnoreCase(u.getEmail()));
+                        bloodRequests.removeIf(req -> req.getRequesterEmail().equalsIgnoreCase(u.getEmail()) || 
+                                                     req.getDonorEmail().equalsIgnoreCase(u.getEmail()));
+                        
+                        javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " and all their data have been permanently deleted.");
+                    } else {
+                        conn.rollback();
+                        javax.swing.JOptionPane.showMessageDialog(null, "Failed to delete user: User not found in database.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(null, "Database Error during deletion: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(null, "Database Error during deletion: " + e.getMessage() + 
+                "\n\nHint: This could be due to complex dependencies. The system tried to clean them up manually.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
 }
