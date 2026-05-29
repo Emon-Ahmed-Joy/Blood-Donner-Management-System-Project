@@ -224,7 +224,6 @@ public class RegistrationPage extends JFrame {
         // Animation
         bgPanel.fadeIn();
     }
-
     private void handleRegistration() {
         String name = nameF == null ? "" : nameF.getText().trim();
         String email = emailF == null ? "" : emailF.getText().trim();
@@ -267,7 +266,6 @@ public class RegistrationPage extends JFrame {
                 return;
             }
 
-            // Upgrade Logic
             User oldUser = DataStore.currentUser;
             Donor newDonor = new Donor(oldUser.getName().trim(), oldUser.getEmail().trim(), oldUser.getPassword().trim(), 
                                      selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);
@@ -276,6 +274,14 @@ public class RegistrationPage extends JFrame {
             DataStore.deleteUser(oldUser);
             DataStore.addUser(newDonor);
             DataStore.currentUser = null; // Clear session for fresh login
+            Donor newDonor = new Donor(oldUser.getName(), oldUser.getEmail(), oldUser.getPassword(),
+                    groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
+
+            DataStore.upgradeUserToDonor(oldUser, newDonor); // DB te save
+            DataStore.users.remove(oldUser);
+            DataStore.users.add(newDonor);
+            DataStore.donors.add(newDonor);
+            DataStore.currentUser = null;
 
             JOptionPane.showMessageDialog(this, "Account Upgraded to Donor! Please login again.");
             new LoginPage().setVisible(true);
@@ -293,6 +299,14 @@ public class RegistrationPage extends JFrame {
             } else {
                 User newUser = new User(name, email, password, stateF.getText().trim(), locF.getText().trim(), false);
                 DataStore.addUser(newUser);
+                Donor newDonor = new Donor(name, email, password, groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
+                DataStore.saveUser(newDonor); // DB  te save
+                DataStore.users.add(newDonor);
+                DataStore.donors.add(newDonor);
+            } else {
+                User newUser = new User(name, email, password, stateF.getText(), locF.getText(), false);
+                DataStore.saveUser(newUser); //DB te save
+                DataStore.users.add(newUser);
             }
 
             JOptionPane.showMessageDialog(this, "Registration Successful! Please login.");

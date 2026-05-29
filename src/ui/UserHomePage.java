@@ -200,6 +200,7 @@ public class UserHomePage extends JFrame {
             } else {
                 currentUser.setPassword(newPass);
                 DataStore.updateUser(currentUser);
+                DataStore.updateUserPassword(currentUser); // ✅ DB te save
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");
                 dialog.dispose();
             }
@@ -254,6 +255,10 @@ public class UserHomePage extends JFrame {
             currentUser.setState(stateF.getText().trim());
             currentUser.setLocation(locF.getText().trim());
             DataStore.updateUser(currentUser);
+            currentUser.setName(nameF.getText());
+            currentUser.setState(stateF.getText());
+            currentUser.setLocation(locF.getText());
+            DataStore.updateUserProfile(currentUser); // DB te save
             detailsLabel.setText("<html><b>Location:</b> " + currentUser.getLocation() + ", " + currentUser.getState() + "</html>");
             UIManager.put("OptionPane.messageFont", labelFont);
             JOptionPane.showMessageDialog(dialog, "Profile updated successfully!");

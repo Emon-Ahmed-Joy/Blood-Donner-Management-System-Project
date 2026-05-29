@@ -288,6 +288,9 @@ public class AdminPage extends JFrame {
                 DataStore.deleteUser(user);
                 refreshAllData();
             }
+            user.setBlocked(!user.isBlocked());
+            DataStore.updateUserBlockStatus(user); // ✅ DB তে save করো
+            refreshAllData();
         });
 
         btnPanel.add(detailsBtn); btnPanel.add(blockBtn); btnPanel.add(deleteBtn);

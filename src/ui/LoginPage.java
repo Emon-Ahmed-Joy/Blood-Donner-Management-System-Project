@@ -18,6 +18,7 @@ public class LoginPage extends JFrame {
     private final Font fieldFont = new Font("Dialog", Font.PLAIN, 20);
 
     public LoginPage() {
+        DataStore.loadAll();
         setTitle("Blood Donor Management System - Login");
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -69,6 +70,24 @@ public class LoginPage extends JFrame {
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         RoundedButton loginBtn = new RoundedButton("Login to Account");
         loginBtn.setIcon(new VectorIcon(VectorIcon.Type.KEY, 24, Color.WHITE));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(new JLabel("📧 Email Address:"), gbc);
+        gbc.gridx = 1;
+        userEmailField = new JTextField(15);
+        panel.add(userEmailField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(new JLabel("🔒 Password:"), gbc);
+        gbc.gridx = 1;
+        userPasswordField = new JPasswordField(15);
+        panel.add(userPasswordField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        RoundedButton loginBtn = new RoundedButton("🔑 Login to Account");
         panel.add(loginBtn, gbc);
 
         gbc.gridy = 3;
@@ -109,6 +128,24 @@ public class LoginPage extends JFrame {
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         RoundedButton loginBtn = new RoundedButton("System Login", new Color(30, 30, 30), new Color(60, 60, 60));
         loginBtn.setIcon(new VectorIcon(VectorIcon.Type.SHIELD, 24, Color.WHITE));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(new JLabel("🆔 Admin ID:"), gbc);
+        gbc.gridx = 1;
+        adminIdField = new JTextField(15);
+        panel.add(adminIdField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(new JLabel("🔒 Password:"), gbc);
+        gbc.gridx = 1;
+        adminPasswordField = new JPasswordField(15);
+        panel.add(adminPasswordField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        RoundedButton loginBtn = new RoundedButton("🛡️ System Login", new Color(30, 30, 30), new Color(60, 60, 60));
         panel.add(loginBtn, gbc);
 
         loginBtn.addActionListener(e -> handleAdminLogin());
@@ -132,8 +169,9 @@ public class LoginPage extends JFrame {
                 }
                 DataStore.currentUser = user; // Track current session
                 DataStore.currentAdminId = null;
+                DataStore.currentUser = user;
                 if (user instanceof Donor) {
-                    new DonorProfilePage((Donor)user).setVisible(true);
+                    new DonorProfilePage((Donor) user).setVisible(true);
                 } else {
                     new UserHomePage(user).setVisible(true);
                 }
@@ -157,6 +195,7 @@ public class LoginPage extends JFrame {
             if (admin.getAdminId().equals(id) && admin.getPassword().equals(password)) {
                 DataStore.currentAdminId = id;
                 DataStore.currentUser = null;
+                DataStore.loadAll();
                 new AdminPage().setVisible(true);
                 this.dispose();
                 return;
@@ -168,4 +207,5 @@ public class LoginPage extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LoginPage().setVisible(true));
     }
+
 }

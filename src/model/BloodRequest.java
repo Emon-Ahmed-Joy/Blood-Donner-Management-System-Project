@@ -8,6 +8,7 @@ import java.util.Date;
  */
 public class BloodRequest {
     private int id; 
+    private int id; // Database primary key
     private String requesterEmail;
     private String requesterName;
     private String donorEmail;
@@ -16,12 +17,14 @@ public class BloodRequest {
     private String status; // "Pending", "Accepted", "Declined", "Completed"
     private String urgency; // "Normal", "Urgent", "Emergency"
     
+    private String status; // "Pending", "Accepted", "Declined"
     private String patientName;
     private String hospitalName;
     private String location;
     private String medicalCondition;
 
-    public BloodRequest(String requesterEmail, String requesterName, String donorEmail, String bloodGroup, 
+    // Constructor (same as before — id is set later from DB)
+    public BloodRequest(String requesterEmail, String requesterName, String donorEmail, String bloodGroup,
                         String patientName, String hospitalName, String location, String medicalCondition) {
         this.requesterEmail = requesterEmail;
         this.requesterName = requesterName;
@@ -40,6 +43,11 @@ public class BloodRequest {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     
+    // ✅ NEW — id getter & setter
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    // Existing Getters
     public String getRequesterEmail() { return requesterEmail; }
     public String getRequesterName() { return requesterName; }
     public String getDonorEmail() { return donorEmail; }
@@ -52,14 +60,24 @@ public class BloodRequest {
     public String getLocation() { return location; }
     public String getMedicalCondition() { return medicalCondition; }
 
+    // Existing Setters
     public void setStatus(String status) { this.status = status; }
     public void setUrgency(String urgency) { this.urgency = urgency; }
+    public void setRequesterEmail(String requesterEmail) { this.requesterEmail = requesterEmail; }
+    public void setRequesterName(String requesterName) { this.requesterName = requesterName; }
+    public void setDonorEmail(String donorEmail) { this.donorEmail = donorEmail; }
+    public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
+    public void setPatientName(String patientName) { this.patientName = patientName; }
+    public void setHospitalName(String hospitalName) { this.hospitalName = hospitalName; }
+    public void setLocation(String location) { this.location = location; }
+    public void setMedicalCondition(String medicalCondition) { this.medicalCondition = medicalCondition; }
+    public void setRequestDate(Date requestDate) { this.requestDate = requestDate; }
 
     @Override
     public String toString() {
         return "[" + status + "] (" + urgency + ") Request for " + bloodGroup + " at " + hospitalName;
     }
-    
+
     public String toAdminString() {
         return "[" + status + "] " + requesterName + " -> " + donorEmail + " (" + bloodGroup + ") [" + urgency + "]";
     }
