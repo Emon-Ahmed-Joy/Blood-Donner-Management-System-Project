@@ -2,6 +2,10 @@ package ui;
 
 import database.DataStore;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.*;
 import model.Donor;
 import model.User;
@@ -11,12 +15,16 @@ import model.User;
  * @author Emon Ahmed Joy
  */
 public class RegistrationPage extends JFrame {
-    private JTextField nameF, emailF, groupF, stateF, locF, medicalF;
+    private JTextField nameF, emailF, stateF, locF;
+    private JTextArea medicalF;
+    private JComboBox<String> groupF;
     private JPasswordField passF;
     private JCheckBox isDonorCheck;
     private boolean isUpgradeMode = false;
     private final Font labelFont = new Font("Dialog", Font.BOLD, 18);
     private final Font fieldFont = new Font("Dialog", Font.PLAIN, 20);
+    private final String[] bloodGroups = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
+    private final String[] commonConditions = {"None", "Anemia", "Asthma", "Diabetes", "Hypertension", "Hepatitis", "Heart Disease", "Severe Allergy"};
 
     public RegistrationPage() {
         this.isUpgradeMode = (DataStore.currentUser != null);
@@ -82,13 +90,75 @@ public class RegistrationPage extends JFrame {
         gl.setIcon(new VectorIcon(VectorIcon.Type.HEART, 22, Color.RED));
         gl.setFont(labelFont);
         formPanel.add(gl, gbc);
-        gbc.gridx = 1; groupF = new JTextField(25); groupF.setFont(fieldFont); formPanel.add(groupF, gbc); r++;
+        gbc.gridx = 1; 
+        groupF = new JComboBox<>(bloodGroups);
+        groupF.setEditable(true);
+        groupF.setFont(fieldFont);
+        formPanel.add(groupF, gbc); r++;
 
         gbc.gridx = 0; gbc.gridy = r;
+        JPanel mlLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        mlLabelPanel.setOpaque(false);
         JLabel ml = new JLabel("Medical Condition:");
         ml.setFont(labelFont);
-        formPanel.add(ml, gbc);
-        gbc.gridx = 1; medicalF = new JTextField(25); medicalF.setFont(fieldFont); formPanel.add(medicalF, gbc); r++;
+        mlLabelPanel.add(ml);
+        formPanel.add(mlLabelPanel, gbc);
+        
+        gbc.gridx = 1; 
+        JPanel medicalPanel = new JPanel(new BorderLayout(5, 0));
+        medicalPanel.setOpaque(false);
+        
+        medicalF = new JTextArea(3, 20);
+        medicalF.setFont(fieldFont);
+        medicalF.setLineWrap(true);
+        medicalF.setWrapStyleWord(true);
+        JScrollPane medicalScroll = new JScrollPane(medicalF);
+        medicalScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        medicalScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0)); // Hide scrollbar arrows/track
+        medicalPanel.add(medicalScroll, BorderLayout.CENTER);
+
+        JButton mlBtn = new JButton("▼");
+        mlBtn.setPreferredSize(new Dimension(30, 30));
+        mlBtn.setFont(new Font("Arial", Font.BOLD, 12));
+        mlBtn.setFocusPainted(false);
+        medicalPanel.add(mlBtn, BorderLayout.EAST);
+        
+        formPanel.add(medicalPanel, gbc); r++;
+
+        JPopupMenu conditionsMenu = new JPopupMenu();
+        for (String condition : commonConditions) {
+            JCheckBoxMenuItem item = new JCheckBoxMenuItem(condition);
+            item.setFont(new Font("Dialog", Font.PLAIN, 16));
+            item.addActionListener(ev -> {
+                String currentText = medicalF.getText().trim();
+                List<String> items = new ArrayList<>(Arrays.asList(currentText.split(",\\s*")));
+                items.removeIf(String::isEmpty);
+                
+                if (item.isSelected()) {
+                    if (!items.contains(condition)) items.add(condition);
+                    item.setForeground(new Color(0, 128, 0)); // Green text for selected
+                } else {
+                    items.remove(condition);
+                    item.setForeground(Color.BLACK);
+                }
+                medicalF.setText(items.stream().collect(Collectors.joining(", ")));
+            });
+            conditionsMenu.add(item);
+        }
+        mlBtn.addActionListener(ev -> {
+            // Update menu checkmarks based on current text
+            String currentText = medicalF.getText().trim().toLowerCase();
+            for (int i = 0; i < conditionsMenu.getComponentCount(); i++) {
+                if (conditionsMenu.getComponent(i) instanceof JCheckBoxMenuItem) {
+                    JCheckBoxMenuItem item = (JCheckBoxMenuItem) conditionsMenu.getComponent(i);
+                    boolean isSelected = Arrays.stream(currentText.split(",\\s*"))
+                                              .anyMatch(s -> s.equalsIgnoreCase(item.getText()));
+                    item.setSelected(isSelected);
+                    item.setForeground(isSelected ? new Color(0, 128, 0) : Color.BLACK);
+                }
+            }
+            conditionsMenu.show(mlBtn, -200, mlBtn.getHeight());
+        });
 
         gbc.gridx = 0; gbc.gridy = r;
         JLabel sl = new JLabel("State:");
@@ -137,10 +207,14 @@ public class RegistrationPage extends JFrame {
         if (!isUpgradeMode) {
             groupF.setEnabled(false);
             medicalF.setEnabled(false);
+            medicalScroll.setEnabled(false);
+            mlBtn.setEnabled(false);
             isDonorCheck.addActionListener(e -> {
                 boolean selected = isDonorCheck.isSelected();
                 groupF.setEnabled(selected);
                 medicalF.setEnabled(selected);
+                medicalScroll.setEnabled(selected);
+                mlBtn.setEnabled(selected);
             });
         }
 
@@ -152,14 +226,43 @@ public class RegistrationPage extends JFrame {
     }
 
     private void handleRegistration() {
+        String name = nameF == null ? "" : nameF.getText().trim();
+        String email = emailF == null ? "" : emailF.getText().trim();
         String password = new String(passF.getPassword()).trim();
+        String selectedGroup = (groupF.getEditor().getItem() != null) ? groupF.getEditor().getItem().toString().trim() : "";
+        String medicalInfo = medicalF.getText().trim();
+
+        // Common Validation
+        if (!isUpgradeMode && (name.isEmpty() || email.isEmpty())) {
+            JOptionPane.showMessageDialog(this, "Please fill in all basic details.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (password.length() < 6) {
+            JOptionPane.showMessageDialog(this, "Password must be at least 6 characters long.", "Weak Password", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (!isUpgradeMode) {
+            if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Invalid Email", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            for (User u : DataStore.users) {
+                if (u.getEmail().equalsIgnoreCase(email)) {
+                    JOptionPane.showMessageDialog(this, "This email is already registered!", "Conflict", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+        }
 
         if (isUpgradeMode) {
             if (!password.equals(DataStore.currentUser.getPassword())) {
                 JOptionPane.showMessageDialog(this, "Incorrect password confirmation!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            if (groupF.getText().trim().isEmpty()) {
+            if (selectedGroup.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please enter your blood group.");
                 return;
             }
@@ -167,7 +270,7 @@ public class RegistrationPage extends JFrame {
             // Upgrade Logic
             User oldUser = DataStore.currentUser;
             Donor newDonor = new Donor(oldUser.getName().trim(), oldUser.getEmail().trim(), oldUser.getPassword().trim(), 
-                                     groupF.getText().trim(), stateF.getText().trim(), locF.getText().trim(), medicalF.getText().trim());
+                                     selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);
             
             // Persist changes
             DataStore.deleteUser(oldUser);
@@ -179,15 +282,13 @@ public class RegistrationPage extends JFrame {
             this.dispose();
 
         } else {
-            String name = nameF.getText().trim();
-            String email = emailF.getText().trim();
             if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please fill basic details.");
                 return;
             }
 
             if (isDonorCheck.isSelected()) {
-                Donor newDonor = new Donor(name, email, password, groupF.getText().trim(), stateF.getText().trim(), locF.getText().trim(), medicalF.getText().trim());
+                Donor newDonor = new Donor(name, email, password, selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);
                 DataStore.addUser(newDonor);
             } else {
                 User newUser = new User(name, email, password, stateF.getText().trim(), locF.getText().trim(), false);

@@ -2,31 +2,35 @@ package ui;
 
 import database.DataStore;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.*;
 import model.Donor;
 import model.User;
 import model.BloodRequest;
+import model.AuditLog;
 
 /**
  * Admin Dashboard for managing users and requests.
  * @author Emon Ahmed Joy
  */
 public class AdminPage extends JFrame {
-    private JPanel usersContainer, donorsContainer, requestsContainer;
+    private JPanel usersContainer, donorsContainer, requestsContainer, logsContainer;
     private JLabel donorStatsLbl, userStatsLbl, requestStatsLbl;
+    private JPanel distributionPanel;
     private JTextField searchField;
     private final Font labelFont = new Font("Dialog", Font.BOLD, 18);
     private final Font fieldFont = new Font("Dialog", Font.PLAIN, 18);
 
     public AdminPage() {
         setTitle("Admin Command Center - Blood Link");
-        setSize(1280, 750);
+        setSize(1280, 850);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         GradientPanel bgPanel = new GradientPanel();
-        JPanel card = GradientPanel.createCard(1200, 680);
+        JPanel card = GradientPanel.createCard(1220, 780);
         
         // Header
         JPanel topPanel = new JPanel(new BorderLayout());
@@ -39,15 +43,22 @@ public class AdminPage extends JFrame {
         topPanel.add(headerLabel, BorderLayout.CENTER);
 
         // Stats Dashboard
+        JPanel statsWrapper = new JPanel(new BorderLayout(0, 10));
+        statsWrapper.setOpaque(false);
+        statsWrapper.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         statsPanel.setOpaque(false);
-        statsPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
-
         donorStatsLbl = createStatBox("Donor Statistics", statsPanel);
         userStatsLbl = createStatBox("User Statistics", statsPanel);
         requestStatsLbl = createStatBox("Request Statistics", statsPanel);
-        topPanel.add(statsPanel, BorderLayout.SOUTH);
+        statsWrapper.add(statsPanel, BorderLayout.NORTH);
 
+        distributionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        distributionPanel.setOpaque(false);
+        statsWrapper.add(distributionPanel, BorderLayout.SOUTH);
+
+        topPanel.add(statsWrapper, BorderLayout.CENTER);
         card.add(topPanel, BorderLayout.NORTH);
 
         // Tabs and Search (Middle)
@@ -71,6 +82,7 @@ public class AdminPage extends JFrame {
         donorsContainer = createTab(tabs, "Manage Donors", VectorIcon.Type.HEART);
         usersContainer = createTab(tabs, "Manage Users", VectorIcon.Type.USER);
         requestsContainer = createTab(tabs, "System Requests", VectorIcon.Type.EMAIL);
+        logsContainer = createTab(tabs, "Audit Logs", VectorIcon.Type.LOCK);
 
         centerPanel.add(tabs, BorderLayout.CENTER);
         card.add(centerPanel, BorderLayout.CENTER);
@@ -92,6 +104,7 @@ public class AdminPage extends JFrame {
             refreshAllData();
         });
         logoutBtn.addActionListener(e -> {
+            DataStore.currentAdminId = null;
             new LoginPage().setVisible(true);
             this.dispose();
         });
@@ -139,11 +152,14 @@ public class AdminPage extends JFrame {
 
     private void updateStats() {
         int totalD = 0, activeD = 0, busyD = 0;
+        Map<String, Integer> groupCounts = new HashMap<>();
         for (Donor d : DataStore.donors) {
             totalD++;
             if (d.isAvailable()) activeD++; else busyD++;
+            String group = d.getBloodGroup();
+            groupCounts.put(group, groupCounts.getOrDefault(group, 0) + 1);
         }
-        donorStatsLbl.setText("<html>Total: <b>" + totalD + "</b> | Active: <font color='green'>" + activeD + "</font> | Busy: <font color='orange'>" + busyD + "</font></html>");
+        donorStatsLbl.setText("<html>Total Donors: <b>" + totalD + "</b><br>Available: <font color='green'>" + activeD + "</font> | Busy: <font color='orange'>" + busyD + "</font></html>");
 
         int totalU = 0, activeU = 0, blockedU = 0;
         for (User u : DataStore.users) {
@@ -152,15 +168,30 @@ public class AdminPage extends JFrame {
                 if (u.isBlocked()) blockedU++; else activeU++;
             }
         }
-        userStatsLbl.setText("<html>Total: <b>" + totalU + "</b> | Active: <font color='green'>" + activeU + "</font> | Blocked: <font color='red'>" + blockedU + "</font></html>");
+        userStatsLbl.setText("<html>Total Users: <b>" + totalU + "</b><br>Active: <font color='green'>" + activeU + "</font> | Blocked: <font color='red'>" + blockedU + "</font></html>");
 
-        int totalR = 0, pendingR = 0, acceptedR = 0;
+        int totalR = 0, pendingR = 0, acceptedR = 0, completedR = 0;
         for (BloodRequest r : DataStore.bloodRequests) {
             totalR++;
-            if (r.getStatus().equals("Pending")) pendingR++;
-            else if (r.getStatus().equals("Accepted")) acceptedR++;
+            if (r.getStatus().equalsIgnoreCase("Pending")) pendingR++;
+            else if (r.getStatus().equalsIgnoreCase("Accepted")) acceptedR++;
+            else completedR++;
         }
-        requestStatsLbl.setText("<html>Total: <b>" + totalR + "</b> | Pending: <font color='blue'>" + pendingR + "</font> | Accepted: <font color='green'>" + acceptedR + "</font></html>");
+        requestStatsLbl.setText("<html>Total Requests: <b>" + totalR + "</b><br>Pending: <font color='blue'>" + pendingR + "</font> | Finalized: <font color='green'>" + (totalR - pendingR) + "</font></html>");
+
+        // Update Blood Group Distribution
+        distributionPanel.removeAll();
+        String[] groups = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
+        for (String g : groups) {
+            int count = groupCounts.getOrDefault(g, 0);
+            JLabel lbl = new JLabel("<html><center><b>" + g + "</b><br>" + count + "</center></html>", SwingConstants.CENTER);
+            lbl.setPreferredSize(new Dimension(60, 50));
+            lbl.setOpaque(true);
+            lbl.setBackground(new Color(255, 255, 255, 180));
+            lbl.setBorder(BorderFactory.createLineBorder(new Color(180, 0, 0), 1));
+            distributionPanel.add(lbl);
+        }
+        distributionPanel.revalidate(); distributionPanel.repaint();
     }
 
     private void refreshAllData() {
@@ -168,6 +199,7 @@ public class AdminPage extends JFrame {
         refreshDonors(filter);
         refreshUsers(filter);
         refreshRequests();
+        refreshAuditLogs();
         updateStats();
     }
 
@@ -206,6 +238,15 @@ public class AdminPage extends JFrame {
         requestsContainer.revalidate(); requestsContainer.repaint();
     }
 
+    private void refreshAuditLogs() {
+        logsContainer.removeAll();
+        for (AuditLog log : DataStore.auditLogs) {
+            logsContainer.add(createLogRow(log));
+            logsContainer.add(Box.createVerticalStrut(5));
+        }
+        logsContainer.revalidate(); logsContainer.repaint();
+    }
+
     private JPanel createUserRow(User user, boolean isDonor) {
         JPanel row = new JPanel(new BorderLayout(15, 0));
         row.setMaximumSize(new Dimension(1100, 100));
@@ -235,12 +276,15 @@ public class AdminPage extends JFrame {
 
         detailsBtn.addActionListener(e -> showUserDetails(user));
         blockBtn.addActionListener(e -> {
-            user.setBlocked(!user.isBlocked());
+            boolean wasBlocked = user.isBlocked();
+            user.setBlocked(!wasBlocked);
             DataStore.updateUser(user);
+            DataStore.addAuditLog((wasBlocked ? "Unblocked" : "Blocked") + " user", user.getEmail());
             refreshAllData();
         });
         deleteBtn.addActionListener(e -> {
             if (JOptionPane.showConfirmDialog(this, "Delete " + user.getName() + "?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                DataStore.addAuditLog("Deleted User Account", user.getEmail());
                 DataStore.deleteUser(user);
                 refreshAllData();
             }
@@ -261,7 +305,11 @@ public class AdminPage extends JFrame {
             BorderFactory.createEmptyBorder(10, 20, 10, 20)
         ));
 
-        JLabel info = new JLabel("<html><font size='5'><b>" + req.getRequesterName() + " -> " + req.getDonorEmail() + "</b><br>" +
+        String urgencyTag = "";
+        if (req.getUrgency().equalsIgnoreCase("Emergency")) urgencyTag = " <font color='red'>[EMERGENCY]</font>";
+        else if (req.getUrgency().equalsIgnoreCase("Urgent")) urgencyTag = " <font color='orange'>[URGENT]</font>";
+
+        JLabel info = new JLabel("<html><font size='5'><b>" + req.getRequesterName() + " -> " + req.getDonorEmail() + "</b>" + urgencyTag + "<br>" +
                                "Group: " + req.getBloodGroup() + " | Status: " + req.getStatus() + "</font></html>");
         row.add(info, BorderLayout.CENTER);
 
@@ -272,18 +320,45 @@ public class AdminPage extends JFrame {
         return row;
     }
 
+    private JPanel createLogRow(AuditLog log) {
+        JPanel row = new JPanel(new BorderLayout(10, 0));
+        row.setMaximumSize(new Dimension(1100, 60));
+        row.setPreferredSize(new Dimension(1100, 60));
+        row.setBackground(Color.WHITE);
+        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
+        
+        JLabel logLbl = new JLabel("<html><font size='4'>[" + log.getLogDate() + "] <b>Admin: " + log.getAdminId() + "</b> - " + 
+                                  log.getAction() + " (Target: " + log.getTargetEmail() + ")</font></html>");
+        row.add(logLbl, BorderLayout.CENTER);
+        return row;
+    }
+
     private void showUserDetails(User user) {
-        String details = "Name: " + user.getName() + "\nEmail: " + user.getEmail() + "\nRole: " + (user instanceof Donor ? "Donor" : "User") + "\nStatus: " + (user.isBlocked() ? "Blocked" : "Active");
+        String details = "<html><body style='width: 300px; padding: 10px;'>" +
+                        "<h2 style='color: #B40000;'>User Profile</h2>" +
+                        "<b>Name:</b> " + user.getName() + "<br>" +
+                        "<b>Email:</b> " + user.getEmail() + "<br>" +
+                        "<b>Role:</b> " + (user instanceof Donor ? "Blood Donor" : "Normal User") + "<br>" +
+                        "<b>Status:</b> " + (user.isBlocked() ? "<font color='red'>Blocked</font>" : "<font color='green'>Active</font>") + "<br>" +
+                        "<b>Location:</b> " + user.getLocation() + ", " + user.getState() + "<br>";
+        
         if (user instanceof Donor) {
             Donor d = (Donor) user;
-            details += "\nDonor: " + (d.isAvailable() ? "Available" : "Busy") + "\nGroup: " + d.getBloodGroup();
+            details += "<hr>" +
+                      "<b>Blood Group:</b> <font color='red'>" + d.getBloodGroup() + "</font><br>" +
+                      "<b>Availability:</b> " + (d.isAvailable() ? "Available for Donation" : "Busy") + "<br>" +
+                      "<b>Medical Conditions:</b><br>" +
+                      "<p style='background-color: #f0f0f0; padding: 5px; border: 1px solid #ccc;'>" + 
+                      (d.getMedicalCondition().isEmpty() ? "None reported" : d.getMedicalCondition()) + "</p>";
         }
-        UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
-        JOptionPane.showMessageDialog(this, details, "User Info", JOptionPane.INFORMATION_MESSAGE);
+        details += "</body></html>";
+        
+        UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 16));
+        JOptionPane.showMessageDialog(this, details, "Full User Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void showRequestDetails(BloodRequest req) {
-        String details = "From: " + req.getRequesterName() + "\nTo: " + req.getDonorEmail() + "\nGroup: " + req.getBloodGroup() + "\nHospital: " + req.getHospitalName() + "\nStatus: " + req.getStatus();
+        String details = "From: " + req.getRequesterName() + "\nTo: " + req.getDonorEmail() + "\nUrgency: " + req.getUrgency() + "\nGroup: " + req.getBloodGroup() + "\nHospital: " + req.getHospitalName() + "\nStatus: " + req.getStatus();
         UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
         JOptionPane.showMessageDialog(this, details, "Request Details", JOptionPane.INFORMATION_MESSAGE);
     }

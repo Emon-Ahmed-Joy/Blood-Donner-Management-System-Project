@@ -13,11 +13,13 @@ import model.Donor;
  * @author Emon Ahmed Joy
  */
 public class UserSearchPage extends JFrame {
-    private JTextField bloodGroupField, stateField, locationField;
+    private JComboBox<String> bloodGroupField;
+    private JTextField stateField, locationField;
     private FadingPanel resultsContainer;
     private JScrollPane scrollPane;
     private final Font labelFont = new Font("Dialog", Font.BOLD, 18);
     private final Font fieldFont = new Font("Dialog", Font.PLAIN, 20);
+    private final String[] bloodGroups = {"", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
 
     public UserSearchPage() {
         setTitle("Search Blood Donors");
@@ -50,7 +52,11 @@ public class UserSearchPage extends JFrame {
         int row = 0;
         JLabel bgLbl = new JLabel("Blood Group:"); bgLbl.setFont(labelFont);
         gbc.gridx = 0; gbc.gridy = row; searchPanel.add(bgLbl, gbc);
-        gbc.gridx = 1; bloodGroupField = new JTextField(12); bloodGroupField.setFont(fieldFont); searchPanel.add(bloodGroupField, gbc); row++;
+        gbc.gridx = 1; 
+        bloodGroupField = new JComboBox<>(bloodGroups);
+        bloodGroupField.setEditable(true);
+        bloodGroupField.setFont(fieldFont);
+        searchPanel.add(bloodGroupField, gbc); row++;
 
         JLabel stLbl = new JLabel("State:"); stLbl.setFont(labelFont);
         gbc.gridx = 0; gbc.gridy = row; searchPanel.add(stLbl, gbc);
@@ -119,7 +125,7 @@ public class UserSearchPage extends JFrame {
     }
 
     private void performSearch() {
-        String bg = bloodGroupField.getText().trim().toLowerCase();
+        String bg = (bloodGroupField.getEditor().getItem() != null) ? bloodGroupField.getEditor().getItem().toString().trim().toLowerCase() : "";
         String st = stateField.getText().trim().toLowerCase();
         String loc = locationField.getText().trim().toLowerCase();
 
@@ -163,8 +169,8 @@ public class UserSearchPage extends JFrame {
 
     private JPanel createDonorResultRow(Donor donor) {
         JPanel row = new JPanel(new BorderLayout(15, 0));
-        row.setMaximumSize(new Dimension(800, 110));
-        row.setPreferredSize(new Dimension(750, 110));
+        row.setMaximumSize(new Dimension(800, 120));
+        row.setPreferredSize(new Dimension(750, 120));
         row.setBackground(new Color(245, 245, 245));
         row.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
@@ -178,19 +184,43 @@ public class UserSearchPage extends JFrame {
         infoLabel.setFont(new Font("Dialog", Font.PLAIN, 15));
         row.add(infoLabel, BorderLayout.CENTER);
 
-        // Request Button
-        RoundedButton requestBtn = new RoundedButton("Request Blood", new Color(180, 0, 0), new Color(220, 20, 20));
-        requestBtn.setPreferredSize(new Dimension(200, 50));
-        row.add(requestBtn, BorderLayout.EAST);
+        // Buttons Panel
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 20));
+        btnPanel.setOpaque(false);
 
+        RoundedButton viewInfoBtn = new RoundedButton("View Info", new Color(70, 70, 70), new Color(100, 100, 100));
+        viewInfoBtn.setPreferredSize(new Dimension(130, 45));
+        viewInfoBtn.addActionListener(e -> showDonorInfo(donor));
+        
+        RoundedButton requestBtn = new RoundedButton("Request Blood", new Color(180, 0, 0), new Color(220, 20, 20));
+        requestBtn.setPreferredSize(new Dimension(170, 45));
         requestBtn.addActionListener(e -> showRequestForm(donor, requestBtn));
+
+        btnPanel.add(viewInfoBtn);
+        btnPanel.add(requestBtn);
+        row.add(btnPanel, BorderLayout.EAST);
 
         return row;
     }
 
+    private void showDonorInfo(Donor donor) {
+        String info = "<html><body style='width: 350px; padding: 10px;'>" +
+                     "<h2 style='color: #B40000;'>Donor Profile</h2>" +
+                     "<b>Name:</b> " + donor.getName() + "<br>" +
+                     "<b>Blood Group:</b> <font color='red' size='5'>" + donor.getBloodGroup() + "</font><br>" +
+                     "<b>Location:</b> " + donor.getLocation() + ", " + donor.getState() + "<br>" +
+                     "<hr><b>Medical Conditions:</b><br>" +
+                     "<p style='background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd;'>" + 
+                     (donor.getMedicalCondition().isEmpty() ? "None reported." : donor.getMedicalCondition()) + "</p>" +
+                     "</body></html>";
+        
+        UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 16));
+        JOptionPane.showMessageDialog(this, info, "Donor Information", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private void showRequestForm(Donor donor, RoundedButton btn) {
         JDialog dialog = new JDialog(this, "Finalize Blood Request", true);
-        dialog.setSize(550, 700);
+        dialog.setSize(550, 750);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -214,6 +244,9 @@ public class UserSearchPage extends JFrame {
         JTextField patientF = new JTextField(); patientF.setFont(fieldFont);
         JTextField hospitalF = new JTextField(); hospitalF.setFont(fieldFont);
         JTextField locationF = new JTextField(); locationF.setFont(fieldFont);
+        String[] urgencies = {"Normal", "Urgent", "Emergency"};
+        JComboBox<String> urgencyF = new JComboBox<>(urgencies); urgencyF.setFont(fieldFont);
+        
         JTextArea conditionA = new JTextArea(4, 20);
         conditionA.setLineWrap(true);
         conditionA.setFont(fieldFont);
@@ -232,6 +265,10 @@ public class UserSearchPage extends JFrame {
         gbc.gridx = 0; gbc.gridy = r++; dialog.add(hlLbl, gbc);
         gbc.gridx = 1; dialog.add(locationF, gbc);
 
+        JLabel uLbl = new JLabel("Urgency Level:"); uLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r++; dialog.add(uLbl, gbc);
+        gbc.gridx = 1; dialog.add(urgencyF, gbc);
+
         JLabel cLbl = new JLabel("Condition:"); cLbl.setFont(labelFont);
         gbc.gridx = 0; gbc.gridy = r++; dialog.add(cLbl, gbc);
         gbc.gridx = 1; dialog.add(new JScrollPane(conditionA), gbc);
@@ -242,9 +279,15 @@ public class UserSearchPage extends JFrame {
         dialog.add(submitBtn, gbc);
 
         submitBtn.addActionListener(ev -> {
-            if (patientF.getText().isEmpty() || hospitalF.getText().isEmpty()) {
+            String patient = patientF.getText().trim();
+            String hospital = hospitalF.getText().trim();
+            String location = locationF.getText().trim();
+            String condition = conditionA.getText().trim();
+            String urgency = urgencyF.getSelectedItem().toString();
+
+            if (patient.isEmpty() || hospital.isEmpty() || location.isEmpty() || condition.isEmpty()) {
                 UIManager.put("OptionPane.messageFont", labelFont);
-                JOptionPane.showMessageDialog(dialog, "Please fill required fields.", "Warning", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "All fields are mandatory.", "Validation Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -253,14 +296,15 @@ public class UserSearchPage extends JFrame {
 
             model.BloodRequest newRequest = new model.BloodRequest(
                 reqEmail, reqName, donor.getEmail(), donor.getBloodGroup(),
-                patientF.getText(), hospitalF.getText(), locationF.getText(), conditionA.getText()
+                patient, hospital, location, condition
             );
+            newRequest.setUrgency(urgency);
             DataStore.addBloodRequest(newRequest);
 
             UIManager.put("OptionPane.messageFont", labelFont);
-            JOptionPane.showMessageDialog(dialog, "Request sent successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(dialog, "Request sent successfully!");
             btn.setEnabled(false);
-            btn.setText("Requested");
+            btn.setText("Sent (" + urgency + ")");
             dialog.dispose();
         });
 

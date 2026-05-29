@@ -118,6 +118,12 @@ public class LoginPage extends JFrame {
     private void handleUserLogin() {
         String email = userEmailField.getText().trim();
         String password = new String(userPasswordField.getPassword()).trim();
+        
+        if (email.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter both email and password.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         for (User user : DataStore.users) {
             if (user.getEmail().equalsIgnoreCase(email) && user.getPassword().equals(password)) {
                 if (user.isBlocked()) {
@@ -125,6 +131,7 @@ public class LoginPage extends JFrame {
                     return;
                 }
                 DataStore.currentUser = user; // Track current session
+                DataStore.currentAdminId = null;
                 if (user instanceof Donor) {
                     new DonorProfilePage((Donor)user).setVisible(true);
                 } else {
@@ -140,8 +147,16 @@ public class LoginPage extends JFrame {
     private void handleAdminLogin() {
         String id = adminIdField.getText().trim();
         String password = new String(adminPasswordField.getPassword()).trim();
+
+        if (id.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter both Admin ID and password.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         for (Admin admin : DataStore.admins) {
             if (admin.getAdminId().equals(id) && admin.getPassword().equals(password)) {
+                DataStore.currentAdminId = id;
+                DataStore.currentUser = null;
                 new AdminPage().setVisible(true);
                 this.dispose();
                 return;

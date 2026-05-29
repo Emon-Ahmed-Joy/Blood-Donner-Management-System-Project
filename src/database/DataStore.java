@@ -14,8 +14,10 @@ public class DataStore {
     public static List<Admin> admins = new ArrayList<>();
     public static List<Donor> donors = new ArrayList<>();
     public static List<BloodRequest> bloodRequests = new ArrayList<>();
+    public static List<AuditLog> auditLogs = new ArrayList<>();
 
     public static User currentUser;
+    public static String currentAdminId; // Track logged in admin
 
     static {
         loadDataFromDatabase();
@@ -26,6 +28,7 @@ public class DataStore {
         admins.clear();
         donors.clear();
         bloodRequests.clear();
+        auditLogs.clear();
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             // Load Admins
@@ -80,19 +83,25 @@ public class DataStore {
                             rs.getString("location"),
                             rs.getString("medical_condition")
                     );
+                    req.setId(rs.getInt("id"));
                     req.setStatus(rs.getString("status"));
+                    req.setUrgency(rs.getString("urgency"));
                     bloodRequests.add(req);
+                }
+            }
+
+            // Load Audit Logs
+            String logQuery = "SELECT * FROM audit_logs ORDER BY log_date DESC";
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(logQuery)) {
+                while (rs.next()) {
+                    AuditLog log = new AuditLog(rs.getString("admin_id"), rs.getString("action"), rs.getString("target_email"));
+                    log.setId(rs.getInt("id"));
+                    log.setLogDate(rs.getTimestamp("log_date"));
+                    auditLogs.add(log);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(null, 
-                "Database Connection Error: " + e.getMessage() + 
-                "\n\n1. Ensure MySQL is running." +
-                "\n2. Ensure 'blood_donor_db' exists (Run schema.sql)." +
-                "\n3. Check credentials in DatabaseConnection.java." +
-                "\n4. Ensure MySQL Connector/J is added to project libraries.",
-                "Database Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -154,8 +163,8 @@ public class DataStore {
     }
 
     public static void addBloodRequest(BloodRequest req) {
-        String query = "INSERT INTO blood_requests (requester_email, requester_name, donor_email, blood_group, patient_name, hospital_name, location, medical_condition, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+        String query = "INSERT INTO blood_requests (requester_email, requester_name, donor_email, blood_group, patient_name, hospital_name, location, medical_condition, status, urgency) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, req.getRequesterEmail());
             pstmt.setString(2, req.getRequesterName());
             pstmt.setString(3, req.getDonorEmail());
@@ -165,10 +174,15 @@ public class DataStore {
             pstmt.setString(7, req.getLocation());
             pstmt.setString(8, req.getMedicalCondition());
             pstmt.setString(9, req.getStatus());
+            pstmt.setString(10, req.getUrgency());
             pstmt.executeUpdate();
-            bloodRequests.add(req);
             
-            // Notify donor
+            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    req.setId(generatedKeys.getInt(1));
+                }
+            }
+            bloodRequests.add(req);
             notifyDonorOfRequest(req.getDonorEmail());
         } catch (SQLException e) {
             e.printStackTrace();
@@ -176,15 +190,13 @@ public class DataStore {
     }
 
     public static void updateRequestStatus(BloodRequest req, String newStatus) {
-        String simpleQuery = "UPDATE blood_requests SET status=? WHERE requester_email=? AND donor_email=? AND status='Pending'";
+        String simpleQuery = "UPDATE blood_requests SET status=? WHERE id=?";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(simpleQuery)) {
             pstmt.setString(1, newStatus);
-            pstmt.setString(2, req.getRequesterEmail());
-            pstmt.setString(3, req.getDonorEmail());
+            pstmt.setInt(2, req.getId());
             pstmt.executeUpdate();
             
             req.setStatus(newStatus);
-            // Notify user
             for (User u : users) {
                 if (u.getEmail().equals(req.getRequesterEmail())) {
                     u.setHasUpdate(true);
@@ -192,6 +204,17 @@ public class DataStore {
                     break;
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteBloodRequest(BloodRequest req) {
+        String query = "DELETE FROM blood_requests WHERE id=?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, req.getId());
+            pstmt.executeUpdate();
+            bloodRequests.remove(req);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -207,39 +230,46 @@ public class DataStore {
         }
     }
 
+    public static void addAuditLog(String action, String target) {
+        String query = "INSERT INTO audit_logs (admin_id, action, target_email) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, currentAdminId == null ? "System" : currentAdminId);
+            pstmt.setString(2, action);
+            pstmt.setString(3, target);
+            pstmt.executeUpdate();
+            AuditLog log = new AuditLog(currentAdminId, action, target);
+            auditLogs.add(0, log); // Add to top
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void deleteUser(User u) {
         String deleteRequestsQuery = "DELETE FROM blood_requests WHERE requester_email=? OR donor_email=?";
         String deleteUserQuery = "DELETE FROM users WHERE email=?";
         
         try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false); // Start transaction
-            
+            conn.setAutoCommit(false);
             try {
-                // 1. Manually delete related blood requests to avoid FK issues
                 try (PreparedStatement pstmt1 = conn.prepareStatement(deleteRequestsQuery)) {
                     pstmt1.setString(1, u.getEmail());
                     pstmt1.setString(2, u.getEmail());
                     pstmt1.executeUpdate();
                 }
-
-                // 2. Delete the user
                 try (PreparedStatement pstmt2 = conn.prepareStatement(deleteUserQuery)) {
                     pstmt2.setString(1, u.getEmail());
                     int rows = pstmt2.executeUpdate();
-                    
                     if (rows > 0) {
-                        conn.commit(); // Success
-                        
-                        // Remove from local caches
+                        conn.commit();
                         users.removeIf(user -> user.getEmail().equalsIgnoreCase(u.getEmail()));
                         donors.removeIf(donor -> donor.getEmail().equalsIgnoreCase(u.getEmail()));
                         bloodRequests.removeIf(req -> req.getRequesterEmail().equalsIgnoreCase(u.getEmail()) || 
                                                      req.getDonorEmail().equalsIgnoreCase(u.getEmail()));
                         
-                        javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " and all their data have been permanently deleted.");
+                        addAuditLog("Deleted User", u.getEmail());
+                        javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " deleted.");
                     } else {
                         conn.rollback();
-                        javax.swing.JOptionPane.showMessageDialog(null, "Failed to delete user: User not found in database.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
                     }
                 }
             } catch (SQLException e) {
@@ -250,8 +280,6 @@ public class DataStore {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(null, "Database Error during deletion: " + e.getMessage() + 
-                "\n\nHint: This could be due to complex dependencies. The system tried to clean them up manually.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
 }

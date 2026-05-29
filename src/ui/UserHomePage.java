@@ -3,9 +3,9 @@ package ui;
 import database.DataStore;
 import java.awt.*;
 import javax.swing.*;
-import model.User;
-import model.Donor;
 import model.BloodRequest;
+import model.Donor;
+import model.User;
 
 /**
  * User Homepage for tracking requests.
@@ -265,21 +265,74 @@ public class UserHomePage extends JFrame {
 
     private void showDonorUpgradeDialog() {
         JDialog dialog = new JDialog(this, "Become a Blood Donor", true);
-        dialog.setSize(550, 750); // Optimized compact width
+        dialog.setSize(600, 700); // Slightly larger for the new component
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(15, 20, 15, 20);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JTextField groupF = new JTextField(20); groupF.setFont(detailFont);
+        String[] bloodGroups = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
+        String[] commonConditions = {"None", "Anemia", "Asthma", "Diabetes", "Hypertension", "Hepatitis", "Heart Disease", "Severe Allergy"};
+
+        JComboBox<String> groupF = new JComboBox<>(bloodGroups);
+        groupF.setEditable(true);
+        groupF.setFont(detailFont);
+
         JTextField stateF = new JTextField(currentUser.getState(), 20); stateF.setFont(detailFont);
         JTextField locF = new JTextField(currentUser.getLocation(), 20); locF.setFont(detailFont);
-        JTextArea medicalA = new JTextArea(5, 25);
+        
+        // Medical Condition Component
+        JPanel medicalPanel = new JPanel(new BorderLayout(5, 0));
+        medicalPanel.setOpaque(false);
+        
+        JTextArea medicalA = new JTextArea(3, 20);
+        medicalA.setFont(detailFont);
         medicalA.setLineWrap(true);
         medicalA.setWrapStyleWord(true);
-        medicalA.setFont(detailFont);
-        medicalA.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        JScrollPane medicalScroll = new JScrollPane(medicalA);
+        medicalScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        medicalScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0)); // Hide scrollbar arrows
+        medicalPanel.add(medicalScroll, BorderLayout.CENTER);
+
+        JButton mlBtn = new JButton("▼");
+        mlBtn.setPreferredSize(new Dimension(30, 30));
+        mlBtn.setFont(new Font("Arial", Font.BOLD, 12));
+        medicalPanel.add(mlBtn, BorderLayout.EAST);
+
+        JPopupMenu conditionsMenu = new JPopupMenu();
+        for (String condition : commonConditions) {
+            JCheckBoxMenuItem item = new JCheckBoxMenuItem(condition);
+            item.setFont(new Font("Dialog", Font.PLAIN, 16));
+            item.addActionListener(ev -> {
+                String currentText = medicalA.getText().trim();
+                java.util.List<String> items = new java.util.ArrayList<>(java.util.Arrays.asList(currentText.split(",\\s*")));
+                items.removeIf(String::isEmpty);
+                
+                if (item.isSelected()) {
+                    if (!items.contains(condition)) items.add(condition);
+                    item.setForeground(new Color(0, 128, 0));
+                } else {
+                    items.remove(condition);
+                    item.setForeground(Color.BLACK);
+                }
+                medicalA.setText(items.stream().collect(java.util.stream.Collectors.joining(", ")));
+            });
+            conditionsMenu.add(item);
+        }
+        mlBtn.addActionListener(ev -> {
+            String currentText = medicalA.getText().trim().toLowerCase();
+            for (int i = 0; i < conditionsMenu.getComponentCount(); i++) {
+                if (conditionsMenu.getComponent(i) instanceof JCheckBoxMenuItem) {
+                    JCheckBoxMenuItem item = (JCheckBoxMenuItem) conditionsMenu.getComponent(i);
+                    boolean isSelected = java.util.Arrays.stream(currentText.split(",\\s*"))
+                                              .anyMatch(s -> s.equalsIgnoreCase(item.getText()));
+                    item.setSelected(isSelected);
+                    item.setForeground(isSelected ? new Color(0, 128, 0) : Color.BLACK);
+                }
+            }
+            conditionsMenu.show(mlBtn, -200, mlBtn.getHeight());
+        });
 
         int r = 0;
         gbc.gridx = 0; gbc.gridy = r++; gbc.gridwidth = 2; gbc.weightx = 1.0;
@@ -306,10 +359,10 @@ public class UserHomePage extends JFrame {
         dialog.add(locF, gbc); r++;
 
         gbc.gridx = 0; gbc.gridy = r; gbc.weightx = 0.3;
-        JLabel l4 = new JLabel("Medical:"); l4.setFont(labelFont);
+        JLabel l4 = new JLabel("Medical Conditions:"); l4.setFont(labelFont);
         dialog.add(l4, gbc);
         gbc.gridx = 1; gbc.weightx = 0.7;
-        dialog.add(new JScrollPane(medicalA), gbc); r++;
+        dialog.add(medicalPanel, gbc); r++;
 
         gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2; gbc.weightx = 1.0;
         dialog.add(Box.createVerticalStrut(10), gbc); r++;
@@ -320,14 +373,15 @@ public class UserHomePage extends JFrame {
         dialog.add(submitBtn, gbc);
 
         submitBtn.addActionListener(e -> {
-            if (groupF.getText().trim().isEmpty()) {
+            String selectedGroup = (groupF.getEditor().getItem() != null) ? groupF.getEditor().getItem().toString().trim() : "";
+            if (selectedGroup.isEmpty()) {
                 UIManager.put("OptionPane.messageFont", labelFont);
                 JOptionPane.showMessageDialog(dialog, "Please enter your blood group.");
                 return;
             }
 
             Donor newDonor = new Donor(currentUser.getName().trim(), currentUser.getEmail().trim(), currentUser.getPassword().trim(),
-                                     groupF.getText().trim(), stateF.getText().trim(), locF.getText().trim(), medicalA.getText().trim());
+                                     selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalA.getText().trim());
             
             // Transfer logic: Update database and local lists
             DataStore.updateUser(newDonor); // This will update the 'is_donor' and other fields in DB
@@ -345,39 +399,98 @@ public class UserHomePage extends JFrame {
 
     private void refreshMyRequests() {
         requestsContainer.removeAll();
-        boolean hasRequests = false;
+        
+        java.util.List<BloodRequest> pending = new java.util.ArrayList<>();
+        java.util.List<BloodRequest> finalized = new java.util.ArrayList<>();
 
         for (BloodRequest req : DataStore.bloodRequests) {
             if (req.getRequesterEmail().equals(currentUser.getEmail())) {
-                requestsContainer.add(createTrackingRow(req));
-                requestsContainer.add(Box.createVerticalStrut(15));
-                hasRequests = true;
+                if (req.getStatus().equalsIgnoreCase("Pending")) pending.add(req);
+                else finalized.add(req);
             }
         }
 
-        if (!hasRequests) {
+        if (pending.isEmpty() && finalized.isEmpty()) {
             JLabel emptyLabel = new JLabel("No requests sent yet.", SwingConstants.CENTER);
             emptyLabel.setFont(labelFont);
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             requestsContainer.add(emptyLabel);
+        } else {
+            if (!pending.isEmpty()) {
+                requestsContainer.add(createHeaderLabel("Pending Requests (" + pending.size() + ")", new Color(0, 102, 204)));
+                for (BloodRequest req : pending) {
+                    requestsContainer.add(createTrackingRow(req));
+                    requestsContainer.add(Box.createVerticalStrut(10));
+                }
+            }
+            
+            if (!finalized.isEmpty()) {
+                requestsContainer.add(Box.createVerticalStrut(15));
+                requestsContainer.add(createHeaderLabel("Finalized Records (" + finalized.size() + ")", new Color(0, 153, 51)));
+                for (BloodRequest req : finalized) {
+                    requestsContainer.add(createTrackingRow(req));
+                    requestsContainer.add(Box.createVerticalStrut(10));
+                }
+            }
         }
 
         requestsContainer.revalidate();
         requestsContainer.repaint();
     }
 
+    private JLabel createHeaderLabel(String text, Color color) {
+        JLabel label = new JLabel(" " + text);
+        label.setFont(new Font("Dialog", Font.BOLD, 18));
+        label.setForeground(color);
+        label.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, color));
+        label.setMaximumSize(new Dimension(600, 35));
+        return label;
+    }
+
     private JPanel createTrackingRow(BloodRequest req) {
-        JPanel row = new JPanel(new BorderLayout());
+        JPanel row = new JPanel(new BorderLayout(15, 0));
         row.setMaximumSize(new Dimension(550, 110));
         row.setPreferredSize(new Dimension(500, 110));
         row.setBackground(new Color(245, 245, 245));
         row.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-        String statusIcon = req.getStatus().equals("Accepted") ? "V" : req.getStatus().equals("Declined") ? "X" : "?";
+        boolean isPending = req.getStatus().equalsIgnoreCase("Pending");
+        String statusIcon = req.getStatus().equals("Accepted") ? "✓" : req.getStatus().equals("Declined") ? "✕" : "⏳";
         String statusColor = req.getStatus().equals("Accepted") ? "green" : req.getStatus().equals("Declined") ? "red" : "blue";
-        String info = "<html><font size='5'>" + statusIcon + " Request to: " + req.getDonorEmail() + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></font></html>";
         
+        String urgencyTag = "";
+        if (req.getUrgency().equalsIgnoreCase("Emergency")) urgencyTag = " <font color='red'>[EMERGENCY]</font>";
+        else if (req.getUrgency().equalsIgnoreCase("Urgent")) urgencyTag = " <font color='orange'>[URGENT]</font>";
+
+        String info = "<html><font size='5'>" + statusIcon + " Request to: " + req.getDonorEmail() + urgencyTag + "<br>" +
+                     "Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></font></html>";
         row.add(new JLabel(info), BorderLayout.CENTER);
+
+        // Action Buttons
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        btnPanel.setOpaque(false);
+        
+        if (isPending) {
+            RoundedButton cancelBtn = new RoundedButton("Cancel", new Color(200, 0, 0), new Color(255, 50, 50));
+            cancelBtn.setPreferredSize(new Dimension(100, 40));
+            cancelBtn.addActionListener(e -> {
+                if (JOptionPane.showConfirmDialog(this, "Cancel this request?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    DataStore.deleteBloodRequest(req);
+                    refreshMyRequests();
+                }
+            });
+            btnPanel.add(cancelBtn);
+        } else {
+            RoundedButton deleteBtn = new RoundedButton("Clear", new Color(70, 70, 70), new Color(100, 100, 100));
+            deleteBtn.setPreferredSize(new Dimension(100, 40));
+            deleteBtn.addActionListener(e -> {
+                DataStore.deleteBloodRequest(req);
+                refreshMyRequests();
+            });
+            btnPanel.add(deleteBtn);
+        }
+        
+        row.add(btnPanel, BorderLayout.EAST);
         return row;
     }
 }
