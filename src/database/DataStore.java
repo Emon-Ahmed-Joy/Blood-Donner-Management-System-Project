@@ -20,7 +20,34 @@ public class DataStore {
     public static String currentAdminId; // Track logged in admin
 
     static {
+        initializeDatabase();
         loadDataFromDatabase();
+    }
+
+    /**
+     * Ensures all required tables and columns exist in the database.
+     */
+    private static void initializeDatabase() {
+        try (Connection conn = DatabaseConnection.getConnection(); Statement stmt = conn.createStatement()) {
+            // 1. Create audit_logs table if missing
+            String createLogsTable = "CREATE TABLE IF NOT EXISTS audit_logs (" +
+                                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                                    "admin_id VARCHAR(50), " +
+                                    "action TEXT, " +
+                                    "target_email VARCHAR(100), " +
+                                    "log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                                    ")";
+            stmt.execute(createLogsTable);
+
+            // 2. Ensure 'urgency' column exists in blood_requests
+            try {
+                stmt.execute("ALTER TABLE blood_requests ADD COLUMN urgency VARCHAR(20) DEFAULT 'Normal'");
+            } catch (SQLException e) {
+                // Column likely already exists, ignore
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void loadDataFromDatabase() {
@@ -85,7 +112,14 @@ public class DataStore {
                     );
                     req.setId(rs.getInt("id"));
                     req.setStatus(rs.getString("status"));
-                    req.setUrgency(rs.getString("urgency"));
+                    
+                    // Handle potential missing urgency column gracefully if initialization failed
+                    try {
+                        req.setUrgency(rs.getString("urgency"));
+                    } catch (SQLException ex) {
+                        req.setUrgency("Normal");
+                    }
+                    
                     bloodRequests.add(req);
                 }
             }
@@ -233,14 +267,20 @@ public class DataStore {
     public static void addAuditLog(String action, String target) {
         String query = "INSERT INTO audit_logs (admin_id, action, target_email) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, currentAdminId == null ? "System" : currentAdminId);
+            String adminId = currentAdminId == null ? "System" : currentAdminId;
+            pstmt.setString(1, adminId);
             pstmt.setString(2, action);
             pstmt.setString(3, target);
             pstmt.executeUpdate();
-            AuditLog log = new AuditLog(currentAdminId, action, target);
-            auditLogs.add(0, log); // Add to top
+            AuditLog log = new AuditLog(adminId, action, target);
+            auditLogs.add(0, log); // Add to top for instant UI update
         } catch (SQLException e) {
             e.printStackTrace();
+            // Critical error: Table probably missing even after attempted init
+            javax.swing.JOptionPane.showMessageDialog(null, 
+                "Critical Logging Error: " + e.getMessage() + 
+                "\n\nPlease ensure your database is updated.", 
+                "Logging Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -261,13 +301,16 @@ public class DataStore {
                     int rows = pstmt2.executeUpdate();
                     if (rows > 0) {
                         conn.commit();
+                        
+                        // LOG THE DELETION BEFORE REFRESHING CACHES
+                        addAuditLog("Deleted User Account", u.getEmail());
+
                         users.removeIf(user -> user.getEmail().equalsIgnoreCase(u.getEmail()));
                         donors.removeIf(donor -> donor.getEmail().equalsIgnoreCase(u.getEmail()));
                         bloodRequests.removeIf(req -> req.getRequesterEmail().equalsIgnoreCase(u.getEmail()) || 
                                                      req.getDonorEmail().equalsIgnoreCase(u.getEmail()));
                         
-                        addAuditLog("Deleted User", u.getEmail());
-                        javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " deleted.");
+                        javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " deleted successfully.");
                     } else {
                         conn.rollback();
                     }
