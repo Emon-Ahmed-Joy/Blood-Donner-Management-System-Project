@@ -7,12 +7,16 @@ import java.util.Date;
  * @author Emon Ahmed Joy
  */
 public class BloodRequest {
+    private int id; 
     private int id; // Database primary key
     private String requesterEmail;
     private String requesterName;
     private String donorEmail;
     private String bloodGroup;
     private Date requestDate;
+    private String status; // "Pending", "Accepted", "Declined", "Completed"
+    private String urgency; // "Normal", "Urgent", "Emergency"
+    
     private String status; // "Pending", "Accepted", "Declined"
     private String patientName;
     private String hospitalName;
@@ -32,8 +36,13 @@ public class BloodRequest {
         this.medicalCondition = medicalCondition;
         this.requestDate = new Date();
         this.status = "Pending";
+        this.urgency = "Normal";
     }
 
+    // Getters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    
     // ✅ NEW — id getter & setter
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -45,6 +54,7 @@ public class BloodRequest {
     public String getBloodGroup() { return bloodGroup; }
     public Date getRequestDate() { return requestDate; }
     public String getStatus() { return status; }
+    public String getUrgency() { return urgency; }
     public String getPatientName() { return patientName; }
     public String getHospitalName() { return hospitalName; }
     public String getLocation() { return location; }
@@ -52,6 +62,7 @@ public class BloodRequest {
 
     // Existing Setters
     public void setStatus(String status) { this.status = status; }
+    public void setUrgency(String urgency) { this.urgency = urgency; }
     public void setRequesterEmail(String requesterEmail) { this.requesterEmail = requesterEmail; }
     public void setRequesterName(String requesterName) { this.requesterName = requesterName; }
     public void setDonorEmail(String donorEmail) { this.donorEmail = donorEmail; }
@@ -64,10 +75,10 @@ public class BloodRequest {
 
     @Override
     public String toString() {
-        return "[" + status + "] Request for " + bloodGroup + " at " + hospitalName;
+        return "[" + status + "] (" + urgency + ") Request for " + bloodGroup + " at " + hospitalName;
     }
 
     public String toAdminString() {
-        return "[" + status + "] " + requesterName + " -> " + donorEmail + " (" + bloodGroup + ")";
+        return "[" + status + "] " + requesterName + " -> " + donorEmail + " (" + bloodGroup + ") [" + urgency + "]";
     }
 }
