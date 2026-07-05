@@ -89,16 +89,14 @@ public class DataStore {
 
     //App start hole data load hobe
     public static void loadAll() {
-        loadAdmins();
-        loadUsers(); // users + donors দুটোই load হবে
-        loadBloodRequests();
+        loadDataFromDatabase();
     }
 
 
     public static void updateUserBlockStatus(User user) {
-        String query = "UPDATE users SET isBlocked = ? WHERE email = ?";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement ps = con.prepareStatement(query)) {
+        String query = "UPDATE users SET is_blocked = ? WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setBoolean(1, user.isBlocked());
             ps.setString(2, user.getEmail());
             ps.executeUpdate();
@@ -156,8 +154,8 @@ public class DataStore {
     //Password update korle DB te save
     public static void updateUserProfile(User user) {
         String query = "UPDATE users SET name = ?, state = ?, location = ? WHERE email = ?";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement ps = con.prepareStatement(query)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, user.getName());
             ps.setString(2, user.getState());
             ps.setString(3, user.getLocation());
@@ -170,8 +168,8 @@ public class DataStore {
 
     public static void updateUserPassword(User user) {
         String query = "UPDATE users SET password = ? WHERE email = ?";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement ps = con.prepareStatement(query)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, user.getPassword());
             ps.setString(2, user.getEmail());
             ps.executeUpdate();
@@ -379,9 +377,9 @@ public class DataStore {
 
     // Profile edit & Password change DB te save hobe
     public static void updateDonorProfile(Donor donor) {
-        String query = "UPDATE users SET name = ?, state = ?, location = ?, bloodGroup = ?, medicalCondition = ?, isDonor = true WHERE email = ?";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement ps = con.prepareStatement(query)) {
+        String query = "UPDATE users SET name = ?, state = ?, location = ?, blood_group = ?, medical_condition = ?, is_donor = true WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, donor.getName());
             ps.setString(2, donor.getState());
             ps.setString(3, donor.getLocation());

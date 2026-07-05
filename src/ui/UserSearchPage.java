@@ -301,8 +301,6 @@ public class UserSearchPage extends JFrame {
             newRequest.setUrgency(urgency);
             DataStore.addBloodRequest(newRequest);
 
-            DataStore.saveBloodRequest(newRequest); // DB te save
-            DataStore.bloodRequests.add(newRequest);
 
             UIManager.put("OptionPane.messageFont", labelFont);
             JOptionPane.showMessageDialog(dialog, "Request sent successfully!");
