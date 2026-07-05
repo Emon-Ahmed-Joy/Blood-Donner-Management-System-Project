@@ -7,20 +7,21 @@ import java.util.Date;
  * @author Emon Ahmed Joy
  */
 public class BloodRequest {
-    private int id; // Database primary key
+    private int id; 
     private String requesterEmail;
     private String requesterName;
     private String donorEmail;
     private String bloodGroup;
     private Date requestDate;
-    private String status; // "Pending", "Accepted", "Declined"
+    private String status; // "Pending", "Accepted", "Declined", "Completed"
+    private String urgency; // "Normal", "Urgent", "Emergency"
+    
     private String patientName;
     private String hospitalName;
     private String location;
     private String medicalCondition;
 
-    // Constructor (same as before — id is set later from DB)
-    public BloodRequest(String requesterEmail, String requesterName, String donorEmail, String bloodGroup,
+    public BloodRequest(String requesterEmail, String requesterName, String donorEmail, String bloodGroup, 
                         String patientName, String hospitalName, String location, String medicalCondition) {
         this.requesterEmail = requesterEmail;
         this.requesterName = requesterName;
@@ -32,42 +33,50 @@ public class BloodRequest {
         this.medicalCondition = medicalCondition;
         this.requestDate = new Date();
         this.status = "Pending";
+        this.urgency = "Normal";
     }
 
-    // ✅ NEW — id getter & setter
+    // Getters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-
-    // Existing Getters
+    
     public String getRequesterEmail() { return requesterEmail; }
     public String getRequesterName() { return requesterName; }
     public String getDonorEmail() { return donorEmail; }
     public String getBloodGroup() { return bloodGroup; }
-    public Date getRequestDate() { return requestDate; }
+    public Date getRequestDate() { 
+        return requestDate != null ? new Date(requestDate.getTime()) : null; 
+    }
     public String getStatus() { return status; }
+    public String getUrgency() { return urgency; }
     public String getPatientName() { return patientName; }
     public String getHospitalName() { return hospitalName; }
     public String getLocation() { return location; }
     public String getMedicalCondition() { return medicalCondition; }
 
-    // Existing Setters
     public void setStatus(String status) { this.status = status; }
-    public void setRequesterEmail(String requesterEmail) { this.requesterEmail = requesterEmail; }
-    public void setRequesterName(String requesterName) { this.requesterName = requesterName; }
-    public void setDonorEmail(String donorEmail) { this.donorEmail = donorEmail; }
-    public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
-    public void setPatientName(String patientName) { this.patientName = patientName; }
-    public void setHospitalName(String hospitalName) { this.hospitalName = hospitalName; }
-    public void setLocation(String location) { this.location = location; }
-    public void setMedicalCondition(String medicalCondition) { this.medicalCondition = medicalCondition; }
-    public void setRequestDate(Date requestDate) { this.requestDate = requestDate; }
+    public void setUrgency(String urgency) { this.urgency = urgency; }
 
     @Override
     public String toString() {
-        return "[" + status + "] Request for " + bloodGroup + " at " + hospitalName;
+        return "[" + status + "] (" + urgency + ") Request for " + bloodGroup + " at " + hospitalName;
+    }
+    
+    public String toAdminString() {
+        return "[" + status + "] " + requesterName + " -> " + donorEmail + " (" + bloodGroup + ") [" + urgency + "]";
     }
 
-    public String toAdminString() {
-        return "[" + status + "] " + requesterName + " -> " + donorEmail + " (" + bloodGroup + ")";
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BloodRequest that = (BloodRequest) o;
+        if (this.id == 0 || that.id == 0) return false;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 }
