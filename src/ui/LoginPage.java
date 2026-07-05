@@ -70,24 +70,6 @@ public class LoginPage extends JFrame {
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         RoundedButton loginBtn = new RoundedButton("Login to Account");
         loginBtn.setIcon(new VectorIcon(VectorIcon.Type.KEY, 24, Color.WHITE));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("📧 Email Address:"), gbc);
-        gbc.gridx = 1;
-        userEmailField = new JTextField(15);
-        panel.add(userEmailField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("🔒 Password:"), gbc);
-        gbc.gridx = 1;
-        userPasswordField = new JPasswordField(15);
-        panel.add(userPasswordField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        RoundedButton loginBtn = new RoundedButton("🔑 Login to Account");
         panel.add(loginBtn, gbc);
 
         gbc.gridy = 3;
@@ -132,24 +114,6 @@ public class LoginPage extends JFrame {
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         RoundedButton loginBtn = new RoundedButton("System Login", new Color(30, 30, 30), new Color(60, 60, 60));
         loginBtn.setIcon(new VectorIcon(VectorIcon.Type.SHIELD, 24, Color.WHITE));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("🆔 Admin ID:"), gbc);
-        gbc.gridx = 1;
-        adminIdField = new JTextField(15);
-        panel.add(adminIdField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("🔒 Password:"), gbc);
-        gbc.gridx = 1;
-        adminPasswordField = new JPasswordField(15);
-        panel.add(adminPasswordField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        RoundedButton loginBtn = new RoundedButton("🛡️ System Login", new Color(30, 30, 30), new Color(60, 60, 60));
         panel.add(loginBtn, gbc);
 
         loginBtn.addActionListener(e -> handleAdminLogin());

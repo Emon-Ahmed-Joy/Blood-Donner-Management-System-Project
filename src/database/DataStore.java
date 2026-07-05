@@ -27,8 +27,6 @@ public class DataStore {
     public static List<Donor> donors = new ArrayList<>();
     public static List<User> users = new ArrayList<>();
     public static List<Admin> admins = new ArrayList<>();
-    public static List<Donor> donors = new ArrayList<>();
-    public static List<BloodRequest> bloodRequests = new ArrayList<>();
     public static List<AuditLog> auditLogs = new ArrayList<>();
 
     public static User currentUser;
@@ -83,7 +81,11 @@ public class DataStore {
             } catch (SQLException e) {
                 // Column likely already exists, ignore
             }
-    public static User currentUser = null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     //App start hole data load hobe
     public static void loadAll() {
@@ -92,18 +94,6 @@ public class DataStore {
         loadBloodRequests();
     }
 
-    public static void updateRequestStatus(BloodRequest request, String status) {
-        String query = "UPDATE blood_requests SET status = ? WHERE id = ?";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement ps = con.prepareStatement(query)) {
-            ps.setString(1, status);
-            ps.setInt(2, request.getId());
-            ps.executeUpdate();
-            request.setStatus(status);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void updateUserBlockStatus(User user) {
         String query = "UPDATE users SET isBlocked = ? WHERE email = ?";
@@ -382,6 +372,10 @@ public class DataStore {
             }
             bloodRequests.add(req);
             notifyDonorOfRequest(req.getDonorEmail());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     // Profile edit & Password change DB te save hobe
     public static void updateDonorProfile(Donor donor) {
@@ -507,9 +501,13 @@ public class DataStore {
     public static void notifyDonorOfRequest(String donorEmail) {
         for (User u : users) {
             if (u.getEmail().equals(donorEmail)) {
-                u.setHasUpdate(true);
-                updateUser(u);
-                break;
+                 u.setHasUpdate(true);
+                 updateUser(u);
+                 break;
+            }
+        }
+    }
+
     public static void loadBloodRequests() {
         bloodRequests.clear();
         String query = "SELECT * FROM blood_requests";
@@ -612,5 +610,4 @@ public class DataStore {
             e.printStackTrace();
         }
     }
-}
 }

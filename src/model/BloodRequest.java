@@ -7,7 +7,6 @@ import java.util.Date;
  * @author Emon Ahmed Joy
  */
 public class BloodRequest {
-    private int id; 
     private int id; // Database primary key
     private String requesterEmail;
     private String requesterName;
@@ -17,7 +16,6 @@ public class BloodRequest {
     private String status; // "Pending", "Accepted", "Declined", "Completed"
     private String urgency; // "Normal", "Urgent", "Emergency"
     
-    private String status; // "Pending", "Accepted", "Declined"
     private String patientName;
     private String hospitalName;
     private String location;
@@ -40,10 +38,6 @@ public class BloodRequest {
     }
 
     // Getters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    
-    // ✅ NEW — id getter & setter
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

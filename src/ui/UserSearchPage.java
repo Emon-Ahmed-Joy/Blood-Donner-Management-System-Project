@@ -300,9 +300,6 @@ public class UserSearchPage extends JFrame {
             );
             newRequest.setUrgency(urgency);
             DataStore.addBloodRequest(newRequest);
-                    reqEmail, reqName, donor.getEmail(), donor.getBloodGroup(),
-                    patientF.getText(), hospitalF.getText(), locationF.getText(), conditionA.getText()
-            );
 
             DataStore.saveBloodRequest(newRequest); // DB te save
             DataStore.bloodRequests.add(newRequest);
