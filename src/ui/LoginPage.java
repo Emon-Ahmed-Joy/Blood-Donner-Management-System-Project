@@ -101,6 +101,10 @@ public class LoginPage extends JFrame {
             this.dispose();
         });
 
+        // Enter key action
+        userEmailField.addActionListener(e -> handleUserLogin());
+        userPasswordField.addActionListener(e -> handleUserLogin());
+
         return panel;
     }
 
@@ -149,12 +153,17 @@ public class LoginPage extends JFrame {
         panel.add(loginBtn, gbc);
 
         loginBtn.addActionListener(e -> handleAdminLogin());
+        
+        // Enter key action
+        adminIdField.addActionListener(e -> handleAdminLogin());
+        adminPasswordField.addActionListener(e -> handleAdminLogin());
+
         return panel;
     }
 
     private void handleUserLogin() {
         String email = userEmailField.getText().trim();
-        String password = new String(userPasswordField.getPassword()).trim();
+        String password = new String(userPasswordField.getPassword());
         
         if (email.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter both email and password.", "Validation Error", JOptionPane.WARNING_MESSAGE);
@@ -162,7 +171,7 @@ public class LoginPage extends JFrame {
         }
 
         for (User user : DataStore.users) {
-            if (user.getEmail().equalsIgnoreCase(email) && user.getPassword().equals(password)) {
+            if (user.getEmail().equalsIgnoreCase(email) && DataStore.checkPassword(password, user.getPassword())) {
                 if (user.isBlocked()) {
                     JOptionPane.showMessageDialog(this, "Your account has been blocked by the Administrator.", "Access Denied", JOptionPane.ERROR_MESSAGE);
                     return;
@@ -184,7 +193,7 @@ public class LoginPage extends JFrame {
 
     private void handleAdminLogin() {
         String id = adminIdField.getText().trim();
-        String password = new String(adminPasswordField.getPassword()).trim();
+        String password = new String(adminPasswordField.getPassword());
 
         if (id.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter both Admin ID and password.", "Validation Error", JOptionPane.WARNING_MESSAGE);
@@ -192,7 +201,7 @@ public class LoginPage extends JFrame {
         }
 
         for (Admin admin : DataStore.admins) {
-            if (admin.getAdminId().equals(id) && admin.getPassword().equals(password)) {
+            if (admin.getAdminId().equals(id) && DataStore.checkPassword(password, admin.getPassword())) {
                 DataStore.currentAdminId = id;
                 DataStore.currentUser = null;
                 DataStore.loadAll();

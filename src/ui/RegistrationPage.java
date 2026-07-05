@@ -227,7 +227,7 @@ public class RegistrationPage extends JFrame {
     private void handleRegistration() {
         String name = nameF == null ? "" : nameF.getText().trim();
         String email = emailF == null ? "" : emailF.getText().trim();
-        String password = new String(passF.getPassword()).trim();
+        String password = new String(passF.getPassword());
         String selectedGroup = (groupF.getEditor().getItem() != null) ? groupF.getEditor().getItem().toString().trim() : "";
         String medicalInfo = medicalF.getText().trim();
 
@@ -257,7 +257,7 @@ public class RegistrationPage extends JFrame {
         }
 
         if (isUpgradeMode) {
-            if (!password.equals(DataStore.currentUser.getPassword())) {
+            if (!DataStore.checkPassword(password, DataStore.currentUser.getPassword())) {
                 JOptionPane.showMessageDialog(this, "Incorrect password confirmation!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -270,9 +270,9 @@ public class RegistrationPage extends JFrame {
             Donor newDonor = new Donor(oldUser.getName().trim(), oldUser.getEmail().trim(), oldUser.getPassword().trim(), 
                                      selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);
             
-            // Persist changes
-            DataStore.deleteUser(oldUser);
-            DataStore.addUser(newDonor);
+            // Persist changes in-place
+            DataStore.updateUser(newDonor);
+            DataStore.loadDataFromDatabase();
             DataStore.currentUser = null; // Clear session for fresh login
             Donor newDonor = new Donor(oldUser.getName(), oldUser.getEmail(), oldUser.getPassword(),
                     groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
@@ -293,11 +293,12 @@ public class RegistrationPage extends JFrame {
                 return;
             }
 
+            String hashedPass = DataStore.hashPassword(password);
             if (isDonorCheck.isSelected()) {
-                Donor newDonor = new Donor(name, email, password, selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);
+                Donor newDonor = new Donor(name, email, hashedPass, selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);
                 DataStore.addUser(newDonor);
             } else {
-                User newUser = new User(name, email, password, stateF.getText().trim(), locF.getText().trim(), false);
+                User newUser = new User(name, email, hashedPass, stateF.getText().trim(), locF.getText().trim(), false);
                 DataStore.addUser(newUser);
                 Donor newDonor = new Donor(name, email, password, groupF.getText(), stateF.getText(), locF.getText(), medicalF.getText());
                 DataStore.saveUser(newDonor); // DB  te save

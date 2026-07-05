@@ -52,7 +52,9 @@ public class BloodRequest {
     public String getRequesterName() { return requesterName; }
     public String getDonorEmail() { return donorEmail; }
     public String getBloodGroup() { return bloodGroup; }
-    public Date getRequestDate() { return requestDate; }
+    public Date getRequestDate() { 
+        return requestDate != null ? new Date(requestDate.getTime()) : null; 
+    }
     public String getStatus() { return status; }
     public String getUrgency() { return urgency; }
     public String getPatientName() { return patientName; }
@@ -80,5 +82,18 @@ public class BloodRequest {
 
     public String toAdminString() {
         return "[" + status + "] " + requesterName + " -> " + donorEmail + " (" + bloodGroup + ") [" + urgency + "]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BloodRequest that = (BloodRequest) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 }

@@ -38,13 +38,17 @@ public class DonorProfilePage extends JFrame {
         titleLabel.setFont(new Font("Dialog", Font.BOLD, 32));
         card.add(titleLabel, BorderLayout.NORTH);
 
-        // Notification Check
-        if (donor.hasUpdate()) {
-            UIManager.put("OptionPane.messageFont", labelFont);
-            JOptionPane.showMessageDialog(this, "(!) You have an update in your requests!", "System Notification", JOptionPane.INFORMATION_MESSAGE);
-            donor.setHasUpdate(false);
-            DataStore.updateUser(donor); // Clear notification flag in DB
-        }
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowOpened(java.awt.event.WindowEvent e) {
+                if (donor.hasUpdate()) {
+                    UIManager.put("OptionPane.messageFont", labelFont);
+                    JOptionPane.showMessageDialog(DonorProfilePage.this, "(!) You have an update in your requests!", "System Notification", JOptionPane.INFORMATION_MESSAGE);
+                    donor.setHasUpdate(false);
+                    DataStore.updateUser(donor); // Clear notification flag in DB
+                }
+            }
+        });
 
         // Main Content
         JPanel mainContent = new JPanel(new GridLayout(1, 2, 20, 20));
@@ -199,19 +203,19 @@ public class DonorProfilePage extends JFrame {
         dialog.add(updateBtn, gbc);
 
         updateBtn.addActionListener(e -> {
-            String oldPass = new String(oldPassF.getPassword()).trim();
-            String newPass = new String(newPassF.getPassword()).trim();
-            String confirmPass = new String(confirmPassF.getPassword()).trim();
+            String oldPass = new String(oldPassF.getPassword());
+            String newPass = new String(newPassF.getPassword());
+            String confirmPass = new String(confirmPassF.getPassword());
 
             UIManager.put("OptionPane.messageFont", labelFont);
-            if (!oldPass.equals(currentDonor.getPassword())) {
+            if (!DataStore.checkPassword(oldPass, currentDonor.getPassword())) {
                 JOptionPane.showMessageDialog(dialog, "Incorrect current password!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (newPass.isEmpty()) {
                 JOptionPane.showMessageDialog(dialog, "New password cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (!newPass.equals(confirmPass)) {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                currentDonor.setPassword(newPass);
+                currentDonor.setPassword(DataStore.hashPassword(newPass));
                 DataStore.updateUser(currentDonor);
                 DataStore.updateUserPassword(currentDonor); // DB te save
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");

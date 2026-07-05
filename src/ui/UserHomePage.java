@@ -34,13 +34,17 @@ public class UserHomePage extends JFrame {
         welcomeLabel.setFont(new Font("Dialog", Font.BOLD, 36));
         card.add(welcomeLabel, BorderLayout.NORTH);
 
-        // Notification Check
-        if (user.hasUpdate()) {
-            UIManager.put("OptionPane.messageFont", labelFont);
-            JOptionPane.showMessageDialog(this, "(!) One of your blood requests has been updated!", "Request Update", JOptionPane.INFORMATION_MESSAGE);
-            user.setHasUpdate(false);
-            DataStore.updateUser(user); // Clear notification flag in DB
-        }
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowOpened(java.awt.event.WindowEvent e) {
+                if (user.hasUpdate()) {
+                    UIManager.put("OptionPane.messageFont", labelFont);
+                    JOptionPane.showMessageDialog(UserHomePage.this, "(!) One of your blood requests has been updated!", "Request Update", JOptionPane.INFORMATION_MESSAGE);
+                    user.setHasUpdate(false);
+                    DataStore.updateUser(user); // Clear notification flag in DB
+                }
+            }
+        });
 
         // Main Content Area
         JPanel mainContent = new JPanel(new GridLayout(1, 2, 20, 0));
@@ -186,19 +190,19 @@ public class UserHomePage extends JFrame {
         dialog.add(updateBtn, gbc);
 
         updateBtn.addActionListener(e -> {
-            String oldPass = new String(oldPassF.getPassword()).trim();
-            String newPass = new String(newPassF.getPassword()).trim();
-            String confirmPass = new String(confirmPassF.getPassword()).trim();
+            String oldPass = new String(oldPassF.getPassword());
+            String newPass = new String(newPassF.getPassword());
+            String confirmPass = new String(confirmPassF.getPassword());
 
             UIManager.put("OptionPane.messageFont", labelFont);
-            if (!oldPass.equals(currentUser.getPassword())) {
+            if (!DataStore.checkPassword(oldPass, currentUser.getPassword())) {
                 JOptionPane.showMessageDialog(dialog, "Incorrect current password!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (newPass.isEmpty()) {
                 JOptionPane.showMessageDialog(dialog, "New password cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (!newPass.equals(confirmPass)) {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                currentUser.setPassword(newPass);
+                currentUser.setPassword(DataStore.hashPassword(newPass));
                 DataStore.updateUser(currentUser);
                 DataStore.updateUserPassword(currentUser); // ✅ DB te save
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");
@@ -385,7 +389,7 @@ public class UserHomePage extends JFrame {
                 return;
             }
 
-            Donor newDonor = new Donor(currentUser.getName().trim(), currentUser.getEmail().trim(), currentUser.getPassword().trim(),
+            Donor newDonor = new Donor(currentUser.getName().trim(), currentUser.getEmail().trim(), currentUser.getPassword(),
                                      selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalA.getText().trim());
             
             // Transfer logic: Update database and local lists

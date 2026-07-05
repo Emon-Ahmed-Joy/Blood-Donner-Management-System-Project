@@ -25,6 +25,6 @@ public class Donor extends User {
 
     @Override
     public String toString() {
-        return name + " [" + bloodGroup + "] - " + location + ", " + state + (isAvailable ? " (Available)" : " (Busy)");
+        return getName() + " [" + bloodGroup + "] - " + getLocation() + ", " + getState() + (isAvailable ? " (Available)" : " (Busy)");
     }
 }

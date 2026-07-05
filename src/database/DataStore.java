@@ -34,6 +34,29 @@ public class DataStore {
     public static User currentUser;
     public static String currentAdminId; // Track logged in admin
 
+    public static String hashPassword(String password) {
+        if (password == null) return null;
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public static boolean checkPassword(String inputPassword, String storedPassword) {
+        if (inputPassword == null || storedPassword == null) return false;
+        String hashed = hashPassword(inputPassword);
+        return storedPassword.equals(hashed) || storedPassword.equals(inputPassword);
+    }
+
     static {
         initializeDatabase();
         loadDataFromDatabase();
@@ -308,6 +331,30 @@ public class DataStore {
             }
             pstmt.setString(11, u.getEmail());
             pstmt.executeUpdate();
+
+            // Synchronize in-memory cache
+            for (int i = 0; i < users.size(); i++) {
+                if (users.get(i).getEmail().equalsIgnoreCase(u.getEmail())) {
+                    users.set(i, u);
+                    break;
+                }
+            }
+            // Sync donors list
+            if (u instanceof Donor) {
+                boolean found = false;
+                for (int i = 0; i < donors.size(); i++) {
+                    if (donors.get(i).getEmail().equalsIgnoreCase(u.getEmail())) {
+                        donors.set(i, (Donor) u);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    donors.add((Donor) u);
+                }
+            } else {
+                donors.removeIf(d -> d.getEmail().equalsIgnoreCase(u.getEmail()));
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -5,14 +5,14 @@ package model;
  * @author Emon Ahmed Joy
  */
 public class User {
-    protected String name;
-    protected String email;
-    protected String password;
-    protected String state;
-    protected String location;
-    protected boolean isDonor;
-    protected boolean isBlocked;
-    protected boolean hasUpdate; // Notification flag
+    private String name;
+    private String email;
+    private String password;
+    private String state;
+    private String location;
+    private boolean isDonor;
+    private boolean isBlocked;
+    private boolean hasUpdate; // Notification flag
 
     public User(String name, String email, String password, String state, String location, boolean isDonor) {
         this.name = name;
@@ -41,4 +41,17 @@ public class User {
     public void setDonor(boolean donor) { isDonor = donor; }
     public void setBlocked(boolean blocked) { isBlocked = blocked; }
     public void setHasUpdate(boolean hasUpdate) { this.hasUpdate = hasUpdate; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return email != null ? email.equalsIgnoreCase(user.email) : user.email == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return email != null ? email.toLowerCase().hashCode() : 0;
+    }
 }

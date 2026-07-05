@@ -26,12 +26,29 @@ public class AuditLog {
     public String getAdminId() { return adminId; }
     public String getAction() { return action; }
     public String getTargetEmail() { return targetEmail; }
-    public Date getLogDate() { return logDate; }
+    public Date getLogDate() { 
+        return logDate != null ? new Date(logDate.getTime()) : null; 
+    }
 
-    public void setLogDate(Date logDate) { this.logDate = logDate; }
+    public void setLogDate(Date logDate) { 
+        this.logDate = logDate != null ? new Date(logDate.getTime()) : null; 
+    }
 
     @Override
     public String toString() {
         return "[" + logDate + "] " + adminId + ": " + action + " (Target: " + targetEmail + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AuditLog auditLog = (AuditLog) o;
+        return id == auditLog.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 }

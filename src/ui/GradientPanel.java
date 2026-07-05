@@ -30,7 +30,25 @@ public class GradientPanel extends JPanel {
             updateParticles();
             repaint();
         });
-        timer.start();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (timer != null) {
+            timer.start();
+        }
+    }
+
+    @Override
+    public void removeNotify() {
+        if (timer != null) {
+            timer.stop();
+        }
+        if (fadeTimer != null) {
+            fadeTimer.stop();
+        }
+        super.removeNotify();
     }
 
     public void fadeIn() {
