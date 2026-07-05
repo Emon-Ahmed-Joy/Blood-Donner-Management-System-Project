@@ -58,7 +58,7 @@
 | **Emon Ahmed Joy** | Manager / Lead Designer | UI/UX, Base Logic, Branding, Admin System |
 | **Durjoy** | Database Engineer | MySQL Integration & Data Migration |
 | **Lisan** | Backend Developer 1 | Profile Editing & Request History |
-| **Nasir** | Backend Developer 2 | System Stats & Input Validation |
+| **Nafiz** | Backend Developer 2 | System Stats & Input Validation |
 
 ---
 

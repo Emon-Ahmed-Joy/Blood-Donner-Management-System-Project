@@ -15,4 +15,17 @@ public class Admin {
 
     public String getAdminId() { return adminId; }
     public String getPassword() { return password; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Admin admin = (Admin) o;
+        return adminId != null ? adminId.equalsIgnoreCase(admin.adminId) : admin.adminId == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return adminId != null ? adminId.toLowerCase().hashCode() : 0;
+    }
 }

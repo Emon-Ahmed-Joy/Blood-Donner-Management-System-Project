@@ -13,7 +13,7 @@ import javax.swing.*;
 public class RoundedButton extends JButton {
     private Color normalColor = new Color(180, 0, 0);
     private Color hoverColor = new Color(220, 20, 20);
-    private float alpha = 0.0f; // 0.0 = normal, 1.0 = hover
+    private float alpha = 0.0f;
     private Timer fadeTimer;
     private int radius = 25;
 
@@ -23,7 +23,7 @@ public class RoundedButton extends JButton {
         setFocusPainted(false);
         setBorderPainted(false);
         setForeground(Color.WHITE);
-        setFont(new Font("SansSerif", Font.BOLD, 14));
+        setFont(new Font("SansSerif", Font.BOLD, 18));
         setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         addMouseListener(new MouseAdapter() {

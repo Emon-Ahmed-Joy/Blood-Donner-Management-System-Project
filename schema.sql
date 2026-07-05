@@ -37,8 +37,18 @@ CREATE TABLE IF NOT EXISTS blood_requests (
     medical_condition TEXT,
     request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'Pending',
-    FOREIGN KEY (requester_email) REFERENCES users(email),
-    FOREIGN KEY (donor_email) REFERENCES users(email)
+    urgency VARCHAR(20) DEFAULT 'Normal', -- Added Urgency Level
+    FOREIGN KEY (requester_email) REFERENCES users(email) ON DELETE CASCADE,
+    FOREIGN KEY (donor_email) REFERENCES users(email) ON DELETE CASCADE
+);
+
+-- Table for Audit Logs
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_id VARCHAR(50),
+    action TEXT,
+    target_email VARCHAR(100),
+    log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert initial sample data
