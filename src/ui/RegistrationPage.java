@@ -224,6 +224,7 @@ public class RegistrationPage extends JFrame {
         // Animation
         bgPanel.fadeIn();
     }
+
     private void handleRegistration() {
         String name = nameF == null ? "" : nameF.getText().trim();
         String email = emailF == null ? "" : emailF.getText().trim();
@@ -266,6 +267,7 @@ public class RegistrationPage extends JFrame {
                 return;
             }
 
+            // Upgrade Logic
             User oldUser = DataStore.currentUser;
             Donor newDonor = new Donor(oldUser.getName().trim(), oldUser.getEmail().trim(), oldUser.getPassword().trim(), 
                                      selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);

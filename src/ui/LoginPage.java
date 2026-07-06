@@ -18,7 +18,6 @@ public class LoginPage extends JFrame {
     private final Font fieldFont = new Font("Dialog", Font.PLAIN, 20);
 
     public LoginPage() {
-        DataStore.loadAll();
         setTitle("Blood Donor Management System - Login");
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -142,9 +141,8 @@ public class LoginPage extends JFrame {
                 }
                 DataStore.currentUser = user; // Track current session
                 DataStore.currentAdminId = null;
-                DataStore.currentUser = user;
                 if (user instanceof Donor) {
-                    new DonorProfilePage((Donor) user).setVisible(true);
+                    new DonorProfilePage((Donor)user).setVisible(true);
                 } else {
                     new UserHomePage(user).setVisible(true);
                 }
@@ -168,7 +166,6 @@ public class LoginPage extends JFrame {
             if (admin.getAdminId().equals(id) && DataStore.checkPassword(password, admin.getPassword())) {
                 DataStore.currentAdminId = id;
                 DataStore.currentUser = null;
-                DataStore.loadAll();
                 new AdminPage().setVisible(true);
                 this.dispose();
                 return;
@@ -180,5 +177,4 @@ public class LoginPage extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LoginPage().setVisible(true));
     }
-
 }

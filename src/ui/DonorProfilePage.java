@@ -217,7 +217,6 @@ public class DonorProfilePage extends JFrame {
             } else {
                 currentDonor.setPassword(DataStore.hashPassword(newPass));
                 DataStore.updateUser(currentDonor);
-                DataStore.updateUserPassword(currentDonor); // DB te save
                 JOptionPane.showMessageDialog(dialog, "Password updated successfully!");
                 dialog.dispose();
             }
@@ -335,6 +334,7 @@ public class DonorProfilePage extends JFrame {
         saveBtn.setPreferredSize(new Dimension(200, 50));
         gbc.gridy = r;
         dialog.add(saveBtn, gbc);
+
         saveBtn.addActionListener(e -> {
             currentDonor.setName(nameF.getText().trim());
             currentDonor.setState(stateF.getText().trim());
@@ -349,9 +349,6 @@ public class DonorProfilePage extends JFrame {
             DataStore.updateUser(currentDonor);
             
             // Refresh main view
-
-            DataStore.updateDonorProfile(currentDonor); // DB te save
-
             this.dispose();
             new DonorProfilePage(currentDonor).setVisible(true);
             UIManager.put("OptionPane.messageFont", labelFont);
