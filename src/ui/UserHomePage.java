@@ -19,6 +19,12 @@ public class UserHomePage extends JFrame {
     private final Font detailFont = new Font("Dialog", Font.PLAIN, 20);
 
     public UserHomePage(User user) {
+        if (user == null) {
+            JOptionPane.showMessageDialog(null, "Access Denied: Please login first.", "Unauthorized", JOptionPane.ERROR_MESSAGE);
+            new LoginPage().setVisible(true);
+            this.dispose();
+            return;
+        }
         this.currentUser = user;
         setTitle("Blood Donor Management - Home");
         setSize(1280, 720);
@@ -197,8 +203,8 @@ public class UserHomePage extends JFrame {
             UIManager.put("OptionPane.messageFont", labelFont);
             if (!DataStore.checkPassword(oldPass, currentUser.getPassword())) {
                 JOptionPane.showMessageDialog(dialog, "Incorrect current password!", "Error", JOptionPane.ERROR_MESSAGE);
-            } else if (newPass.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "New password cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+            } else if (newPass.length() < 6) {
+                JOptionPane.showMessageDialog(dialog, "New password must be at least 6 characters!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (!newPass.equals(confirmPass)) {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
@@ -254,14 +260,20 @@ public class UserHomePage extends JFrame {
         dialog.add(saveBtn, gbc);
 
         saveBtn.addActionListener(e -> {
+            if (nameF.getText().trim().isEmpty()) {
+                UIManager.put("OptionPane.messageFont", labelFont);
+                JOptionPane.showMessageDialog(dialog, "Name cannot be empty!", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             currentUser.setName(nameF.getText().trim());
             currentUser.setState(stateF.getText().trim());
             currentUser.setLocation(locF.getText().trim());
             DataStore.updateUser(currentUser);
-            detailsLabel.setText("<html><b>Location:</b> " + currentUser.getLocation() + ", " + currentUser.getState() + "</html>");
             UIManager.put("OptionPane.messageFont", labelFont);
             JOptionPane.showMessageDialog(dialog, "Profile updated successfully!");
             dialog.dispose();
+            new UserHomePage(currentUser).setVisible(true);
+            UserHomePage.this.dispose();
         });
 
         dialog.setVisible(true);
@@ -368,6 +380,13 @@ public class UserHomePage extends JFrame {
         gbc.gridx = 1; gbc.weightx = 0.7;
         dialog.add(medicalPanel, gbc); r++;
 
+        gbc.gridx = 0; gbc.gridy = r; gbc.weightx = 0.3;
+        JLabel passLbl = new JLabel("Confirm Password:"); passLbl.setFont(labelFont);
+        dialog.add(passLbl, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        JPasswordField confirmPassF = new JPasswordField(20); confirmPassF.setFont(detailFont);
+        dialog.add(confirmPassF, gbc); r++;
+
         gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2; gbc.weightx = 1.0;
         dialog.add(Box.createVerticalStrut(10), gbc); r++;
 
@@ -377,6 +396,13 @@ public class UserHomePage extends JFrame {
         dialog.add(submitBtn, gbc);
 
         submitBtn.addActionListener(e -> {
+            String confirmPass = new String(confirmPassF.getPassword());
+            if (!DataStore.checkPassword(confirmPass, currentUser.getPassword())) {
+                UIManager.put("OptionPane.messageFont", labelFont);
+                JOptionPane.showMessageDialog(dialog, "Incorrect password confirmation!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             String selectedGroup = (groupF.getEditor().getItem() != null) ? groupF.getEditor().getItem().toString().trim() : "";
             if (selectedGroup.isEmpty()) {
                 UIManager.put("OptionPane.messageFont", labelFont);

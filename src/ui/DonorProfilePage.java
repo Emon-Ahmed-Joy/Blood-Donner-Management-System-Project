@@ -24,6 +24,12 @@ public class DonorProfilePage extends JFrame {
 
     public DonorProfilePage(Donor donor) {
         this.currentDonor = donor;
+        if (donor == null) {
+            JOptionPane.showMessageDialog(null, "Access Denied: Please login first.", "Unauthorized", JOptionPane.ERROR_MESSAGE);
+            new LoginPage().setVisible(true);
+            this.dispose();
+            return;
+        }
         setTitle("Donor Profile - " + donor.getName());
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -60,10 +66,10 @@ public class DonorProfilePage extends JFrame {
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         detailsPanel.setBorder(BorderFactory.createTitledBorder(null, "My Account Details", 0, 0, labelFont));
 
-        detailsPanel.add(createDetailLabel("Name: " + donor.getName()));
-        detailsPanel.add(createDetailLabel("Email: " + donor.getEmail()));
-        detailsPanel.add(createDetailLabel("<html><font color='red'>&hearts;</font> Blood Group: " + donor.getBloodGroup() + "</html>"));
-        detailsPanel.add(createDetailLabel("<html>Location: " + donor.getLocation() + ", " + donor.getState() + "</html>"));
+        detailsPanel.add(createDetailLabel("Name: " + DataStore.escapeHtml(donor.getName())));
+        detailsPanel.add(createDetailLabel("Email: " + DataStore.escapeHtml(donor.getEmail())));
+        detailsPanel.add(createDetailLabel("<html><font color='red'>&hearts;</font> Blood Group: " + DataStore.escapeHtml(DataStore.safe(donor.getBloodGroup())) + "</html>"));
+        detailsPanel.add(createDetailLabel("<html>Location: " + DataStore.escapeHtml(DataStore.safe(donor.getLocation())) + ", " + DataStore.escapeHtml(DataStore.safe(donor.getState())) + "</html>"));
         
         statusLabel = createDetailLabel("Status: " + (donor.isAvailable() ? "Available" : "Busy"));
         detailsPanel.add(statusLabel);
@@ -210,8 +216,8 @@ public class DonorProfilePage extends JFrame {
             UIManager.put("OptionPane.messageFont", labelFont);
             if (!DataStore.checkPassword(oldPass, currentDonor.getPassword())) {
                 JOptionPane.showMessageDialog(dialog, "Incorrect current password!", "Error", JOptionPane.ERROR_MESSAGE);
-            } else if (newPass.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "New password cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+            } else if (newPass.length() < 6) {
+                JOptionPane.showMessageDialog(dialog, "New password must be at least 6 characters!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (!newPass.equals(confirmPass)) {
                 JOptionPane.showMessageDialog(dialog, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
@@ -336,6 +342,11 @@ public class DonorProfilePage extends JFrame {
         dialog.add(saveBtn, gbc);
 
         saveBtn.addActionListener(e -> {
+            if (nameF.getText().trim().isEmpty()) {
+                UIManager.put("OptionPane.messageFont", labelFont);
+                JOptionPane.showMessageDialog(dialog, "Name cannot be empty!", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             currentDonor.setName(nameF.getText().trim());
             currentDonor.setState(stateF.getText().trim());
             currentDonor.setLocation(locF.getText().trim());
@@ -591,10 +602,10 @@ public class DonorProfilePage extends JFrame {
     }
 
     private void showRequestDetails(BloodRequest req) {
-        String msg = "Hospital: " + req.getHospitalName() + "\n" +
-                     "Patient: " + req.getPatientName() + "\n" +
-                     "Location: " + req.getLocation() + "\n" +
-                     "Condition: " + req.getMedicalCondition();
+        String msg = "Hospital: " + DataStore.safe(req.getHospitalName()) + "\n" +
+                     "Patient: " + DataStore.safe(req.getPatientName()) + "\n" +
+                     "Location: " + DataStore.safe(req.getLocation()) + "\n" +
+                     "Condition: " + DataStore.safe(req.getMedicalCondition());
         UIManager.put("OptionPane.messageFont", labelFont);
         JOptionPane.showMessageDialog(this, msg, "Request Details", JOptionPane.INFORMATION_MESSAGE);
     }

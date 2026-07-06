@@ -163,7 +163,7 @@ public class LoginPage extends JFrame {
         }
 
         for (Admin admin : DataStore.admins) {
-            if (admin.getAdminId().equals(id) && DataStore.checkPassword(password, admin.getPassword())) {
+            if (admin.getAdminId().equalsIgnoreCase(id) && DataStore.checkPassword(password, admin.getPassword())) {
                 DataStore.currentAdminId = id;
                 DataStore.currentUser = null;
                 new AdminPage().setVisible(true);
@@ -171,7 +171,7 @@ public class LoginPage extends JFrame {
                 return;
             }
         }
-        JOptionPane.showMessageDialog(this, "Access Denied: Invalid Admin ID", "Auth Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Access Denied: Invalid Admin ID or Password", "Auth Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public static void main(String[] args) {

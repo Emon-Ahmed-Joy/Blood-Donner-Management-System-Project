@@ -42,9 +42,30 @@ public class DataStore {
         return storedPassword.equals(hashed) || storedPassword.equals(inputPassword);
     }
 
+    public static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+    }
+
+    public static String safe(String s) {
+        return s != null ? s : "";
+    }
+
     static {
         initializeDatabase();
         loadDataFromDatabase();
+    }
+
+    private static boolean dbConnectionAlertShown = false;
+
+    private static void showDbError(Exception e) {
+        if (!dbConnectionAlertShown) {
+            dbConnectionAlertShown = true;
+            javax.swing.JOptionPane.showMessageDialog(null,
+                "Database Connection Error: " + e.getMessage() +
+                "\n\nPlease ensure MySQL is running on port 3306 and settings in DatabaseConnection.java match your database setup.",
+                "Database Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
@@ -52,24 +73,78 @@ public class DataStore {
      */
     private static void initializeDatabase() {
         try (Connection conn = DatabaseConnection.getConnection(); Statement stmt = conn.createStatement()) {
-            // 1. Create audit_logs table if missing
+            // 1. Create users table if missing
+            String createUsersTable = "CREATE TABLE IF NOT EXISTS users (" +
+                                      "email VARCHAR(100) PRIMARY KEY, " +
+                                      "name VARCHAR(100) NOT NULL, " +
+                                      "password VARCHAR(100) NOT NULL, " +
+                                      "state VARCHAR(100), " +
+                                      "location VARCHAR(100), " +
+                                      "is_donor BOOLEAN DEFAULT FALSE, " +
+                                      "is_blocked BOOLEAN DEFAULT FALSE, " +
+                                      "has_update BOOLEAN DEFAULT FALSE, " +
+                                      "blood_group VARCHAR(5), " +
+                                      "medical_condition TEXT, " +
+                                      "is_available BOOLEAN DEFAULT TRUE" +
+                                      ")";
+            stmt.execute(createUsersTable);
+
+            // 2. Create admins table if missing
+            String createAdminsTable = "CREATE TABLE IF NOT EXISTS admins (" +
+                                       "admin_id VARCHAR(50) PRIMARY KEY, " +
+                                       "password VARCHAR(100) NOT NULL" +
+                                       ")";
+            stmt.execute(createAdminsTable);
+
+            // 3. Create blood_requests table if missing
+            String createRequestsTable = "CREATE TABLE IF NOT EXISTS blood_requests (" +
+                                         "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                                         "requester_email VARCHAR(100), " +
+                                         "requester_name VARCHAR(100), " +
+                                         "donor_email VARCHAR(100), " +
+                                         "blood_group VARCHAR(5), " +
+                                         "patient_name VARCHAR(100), " +
+                                         "hospital_name VARCHAR(100), " +
+                                         "location VARCHAR(100), " +
+                                         "medical_condition TEXT, " +
+                                         "request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                                         "status VARCHAR(20) DEFAULT 'Pending', " +
+                                         "urgency VARCHAR(20) DEFAULT 'Normal', " +
+                                         "FOREIGN KEY (requester_email) REFERENCES users(email) ON DELETE CASCADE, " +
+                                         "FOREIGN KEY (donor_email) REFERENCES users(email) ON DELETE CASCADE" +
+                                         ")";
+            stmt.execute(createRequestsTable);
+
+            // 4. Create audit_logs table if missing
             String createLogsTable = "CREATE TABLE IF NOT EXISTS audit_logs (" +
-                                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                                    "admin_id VARCHAR(50), " +
-                                    "action TEXT, " +
-                                    "target_email VARCHAR(100), " +
-                                    "log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
-                                    ")";
+                                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                                     "admin_id VARCHAR(50), " +
+                                     "action TEXT, " +
+                                     "target_email VARCHAR(100), " +
+                                     "log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                                     ")";
             stmt.execute(createLogsTable);
 
-            // 2. Ensure 'urgency' column exists in blood_requests
+            // 5. Ensure 'urgency' column exists in blood_requests
             try {
                 stmt.execute("ALTER TABLE blood_requests ADD COLUMN urgency VARCHAR(20) DEFAULT 'Normal'");
             } catch (SQLException e) {
                 // Column likely already exists, ignore
             }
+
+            // 6. Insert default admin if table is empty
+            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM admins")) {
+                if (rs.next() && rs.getInt(1) == 0) {
+                    String hashedDefaultPass = hashPassword("admin123");
+                    try (PreparedStatement seedStmt = conn.prepareStatement("INSERT INTO admins (admin_id, password) VALUES ('admin', ?)")) {
+                        seedStmt.setString(1, hashedDefaultPass);
+                        seedStmt.executeUpdate();
+                    }
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+            showDbError(e);
         }
     }
 
@@ -159,6 +234,7 @@ public class DataStore {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            showDbError(e);
         }
     }
 

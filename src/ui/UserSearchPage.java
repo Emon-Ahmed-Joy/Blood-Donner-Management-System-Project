@@ -133,16 +133,20 @@ public class UserSearchPage extends JFrame {
         List<DonorMatch> matched = new ArrayList<>();
         
         for (Donor d : DataStore.donors) {
+            // Skip self and blocked donors
+            if (DataStore.currentUser != null && d.getEmail().equalsIgnoreCase(DataStore.currentUser.getEmail())) continue;
+            if (d.isBlocked()) continue;
+
             int score = 0;
-            boolean matchesBG = bg.isEmpty() || d.getBloodGroup().toLowerCase().equals(bg);
-            boolean matchesST = st.isEmpty() || d.getState().toLowerCase().contains(st);
-            boolean matchesLOC = loc.isEmpty() || d.getLocation().toLowerCase().contains(loc);
+            boolean matchesBG = bg.isEmpty() || (d.getBloodGroup() != null && d.getBloodGroup().toLowerCase().equals(bg));
+            boolean matchesST = st.isEmpty() || (d.getState() != null && d.getState().toLowerCase().contains(st));
+            boolean matchesLOC = loc.isEmpty() || (d.getLocation() != null && d.getLocation().toLowerCase().contains(loc));
 
             if (matchesBG && matchesST && matchesLOC && d.isAvailable()) {
                 // Scoring system for "Proximity"
-                if (d.getBloodGroup().toLowerCase().equals(bg)) score += 100;
-                if (!loc.isEmpty() && d.getLocation().toLowerCase().equals(loc)) score += 50;
-                if (!st.isEmpty() && d.getState().toLowerCase().equals(st)) score += 20;
+                if (d.getBloodGroup() != null && d.getBloodGroup().toLowerCase().equals(bg)) score += 100;
+                if (!loc.isEmpty() && d.getLocation() != null && d.getLocation().toLowerCase().equals(loc)) score += 50;
+                if (!st.isEmpty() && d.getState() != null && d.getState().toLowerCase().equals(st)) score += 20;
                 
                 matched.add(new DonorMatch(d, score));
             }
@@ -178,8 +182,8 @@ public class UserSearchPage extends JFrame {
         ));
 
         // Info Label
-        String info = "<html><font size='5'><b>" + donor.getName() + "</b> <font color='red'>(" + donor.getBloodGroup() + ")</font><br>" +
-                      donor.getLocation() + ", " + donor.getState() + "</font></html>";
+        String info = "<html><font size='5'><b>" + DataStore.escapeHtml(donor.getName()) + "</b> <font color='red'>(" + DataStore.escapeHtml(donor.getBloodGroup()) + ")</font><br>" +
+                      DataStore.escapeHtml(DataStore.safe(donor.getLocation())) + ", " + DataStore.escapeHtml(DataStore.safe(donor.getState())) + "</font></html>";
         JLabel infoLabel = new JLabel(info);
         infoLabel.setFont(new Font("Dialog", Font.PLAIN, 15));
         row.add(infoLabel, BorderLayout.CENTER);
@@ -206,12 +210,12 @@ public class UserSearchPage extends JFrame {
     private void showDonorInfo(Donor donor) {
         String info = "<html><body style='width: 350px; padding: 10px;'>" +
                      "<h2 style='color: #B40000;'>Donor Profile</h2>" +
-                     "<b>Name:</b> " + donor.getName() + "<br>" +
-                     "<b>Blood Group:</b> <font color='red' size='5'>" + donor.getBloodGroup() + "</font><br>" +
-                     "<b>Location:</b> " + donor.getLocation() + ", " + donor.getState() + "<br>" +
+                     "<b>Name:</b> " + DataStore.escapeHtml(donor.getName()) + "<br>" +
+                     "<b>Blood Group:</b> <font color='red' size='5'>" + DataStore.escapeHtml(donor.getBloodGroup()) + "</font><br>" +
+                     "<b>Location:</b> " + DataStore.escapeHtml(DataStore.safe(donor.getLocation())) + ", " + DataStore.escapeHtml(DataStore.safe(donor.getState())) + "<br>" +
                      "<hr><b>Medical Conditions:</b><br>" +
                      "<p style='background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd;'>" + 
-                     (donor.getMedicalCondition().isEmpty() ? "None reported." : donor.getMedicalCondition()) + "</p>" +
+                     (DataStore.safe(donor.getMedicalCondition()).isEmpty() ? "None reported." : DataStore.escapeHtml(donor.getMedicalCondition())) + "</p>" +
                      "</body></html>";
         
         UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 16));
@@ -294,18 +298,23 @@ public class UserSearchPage extends JFrame {
             String reqEmail = (DataStore.currentUser != null) ? DataStore.currentUser.getEmail() : "guest@system.com";
             String reqName = (DataStore.currentUser != null) ? DataStore.currentUser.getName() : "Guest";
 
+            // Check for existing pending request to this donor
+            for (model.BloodRequest existing : DataStore.bloodRequests) {
+                if (existing.getDonorEmail().equals(donor.getEmail()) &&
+                    existing.getRequesterEmail().equals(reqEmail) &&
+                    existing.getStatus().equalsIgnoreCase("Pending")) {
+                    UIManager.put("OptionPane.messageFont", labelFont);
+                    JOptionPane.showMessageDialog(dialog, "You already have a pending request to this donor.", "Duplicate Request", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+
             model.BloodRequest newRequest = new model.BloodRequest(
                 reqEmail, reqName, donor.getEmail(), donor.getBloodGroup(),
                 patient, hospital, location, condition
             );
             newRequest.setUrgency(urgency);
             DataStore.addBloodRequest(newRequest);
-                    reqEmail, reqName, donor.getEmail(), donor.getBloodGroup(),
-                    patientF.getText(), hospitalF.getText(), locationF.getText(), conditionA.getText()
-            );
-
-            DataStore.saveBloodRequest(newRequest); // DB te save
-            DataStore.bloodRequests.add(newRequest);
 
             UIManager.put("OptionPane.messageFont", labelFont);
             JOptionPane.showMessageDialog(dialog, "Request sent successfully!");

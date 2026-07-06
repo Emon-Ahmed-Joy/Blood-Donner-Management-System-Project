@@ -284,13 +284,9 @@ public class AdminPage extends JFrame {
         });
         deleteBtn.addActionListener(e -> {
             if (JOptionPane.showConfirmDialog(this, "Delete " + user.getName() + "?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                DataStore.addAuditLog("Deleted User Account", user.getEmail());
                 DataStore.deleteUser(user);
                 refreshAllData();
             }
-            user.setBlocked(!user.isBlocked());
-            DataStore.updateUserBlockStatus(user); // ✅ DB তে save করো
-            refreshAllData();
         });
 
         btnPanel.add(detailsBtn); btnPanel.add(blockBtn); btnPanel.add(deleteBtn);

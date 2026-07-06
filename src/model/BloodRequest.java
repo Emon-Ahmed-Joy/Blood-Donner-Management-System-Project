@@ -71,6 +71,7 @@ public class BloodRequest {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BloodRequest that = (BloodRequest) o;
+        if (this.id == 0 || that.id == 0) return false;
         return id == that.id;
     }
 
