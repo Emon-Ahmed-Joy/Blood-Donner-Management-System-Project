@@ -106,6 +106,9 @@ public class VectorIcon implements Icon {
                 g2.fill(new Ellipse2D.Float(s * 0.22f, s * 0.15f, s * 0.35f, s * 0.35f));
                 g2.fill(new Ellipse2D.Float(s * 0.43f, s * 0.15f, s * 0.35f, s * 0.35f));
                 break;
+            default:
+                g2.draw(new Rectangle2D.Float(s * 0.1f, s * 0.1f, s * 0.8f, s * 0.8f));
+                break;
         }
 
         g2.dispose();

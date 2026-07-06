@@ -244,7 +244,7 @@ public class RegistrationPage extends JFrame {
         }
 
         if (!isUpgradeMode) {
-            if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
                 JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Invalid Email", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -269,7 +269,7 @@ public class RegistrationPage extends JFrame {
 
             // Upgrade Logic
             User oldUser = DataStore.currentUser;
-            Donor newDonor = new Donor(oldUser.getName().trim(), oldUser.getEmail().trim(), oldUser.getPassword().trim(), 
+            Donor newDonor = new Donor(oldUser.getName().trim(), oldUser.getEmail().trim(), oldUser.getPassword(), 
                                      selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);
             
             // Persist changes in-place
@@ -282,11 +282,6 @@ public class RegistrationPage extends JFrame {
             this.dispose();
 
         } else {
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill basic details.");
-                return;
-            }
-
             String hashedPass = DataStore.hashPassword(password);
             if (isDonorCheck.isSelected()) {
                 Donor newDonor = new Donor(name, email, hashedPass, selectedGroup, stateF.getText().trim(), locF.getText().trim(), medicalInfo);

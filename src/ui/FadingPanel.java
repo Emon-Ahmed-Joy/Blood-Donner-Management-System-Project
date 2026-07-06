@@ -33,10 +33,10 @@ public class FadingPanel extends JPanel {
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    public void paint(Graphics g) {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        super.paintComponent(g2d);
+        super.paint(g2d);
         g2d.dispose();
     }
 }

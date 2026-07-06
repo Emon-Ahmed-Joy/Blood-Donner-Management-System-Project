@@ -23,13 +23,13 @@ public class DonorProfilePage extends JFrame {
     private final Font detailFont = new Font("Dialog", Font.PLAIN, 20);
 
     public DonorProfilePage(Donor donor) {
-        this.currentDonor = donor;
         if (donor == null) {
             JOptionPane.showMessageDialog(null, "Access Denied: Please login first.", "Unauthorized", JOptionPane.ERROR_MESSAGE);
             new LoginPage().setVisible(true);
             this.dispose();
             return;
         }
+        this.currentDonor = donor;
         setTitle("Donor Profile - " + donor.getName());
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -147,6 +147,7 @@ public class DonorProfilePage extends JFrame {
         });
 
         logoutBtn.addActionListener(e -> {
+            DataStore.currentUser = null;
             new LoginPage().setVisible(true);
             this.dispose();
         });
@@ -360,10 +361,10 @@ public class DonorProfilePage extends JFrame {
             DataStore.updateUser(currentDonor);
             
             // Refresh main view
+            UIManager.put("OptionPane.messageFont", labelFont);
+            JOptionPane.showMessageDialog(dialog, "Profile updated successfully!");
             this.dispose();
             new DonorProfilePage(currentDonor).setVisible(true);
-            UIManager.put("OptionPane.messageFont", labelFont);
-            JOptionPane.showMessageDialog(null, "Profile updated successfully!");
         });
 
         dialog.setVisible(true);
@@ -493,7 +494,7 @@ public class DonorProfilePage extends JFrame {
         if (req.getUrgency().equalsIgnoreCase("Emergency")) urgencyTag = " <font color='red'>[EMERGENCY]</font>";
         else if (req.getUrgency().equalsIgnoreCase("Urgent")) urgencyTag = " <font color='orange'>[URGENT]</font>";
 
-        String info = "<html><font size='5'><b>From: " + req.getRequesterName() + "</b>" + urgencyTag + "<br>" +
+        String info = "<html><font size='5'><b>From: " + DataStore.escapeHtml(req.getRequesterName()) + "</b>" + urgencyTag + "<br>" +
                       "Status: " + statusIcon + " <font color='" + statusColor + "'>" + req.getStatus() + "</font></font></html>";
         JLabel infoLabel = new JLabel(info);
         row.add(infoLabel, BorderLayout.CENTER);
@@ -571,7 +572,7 @@ public class DonorProfilePage extends JFrame {
         if (req.getUrgency().equalsIgnoreCase("Emergency")) urgencyTag = " <font color='red'>[EMERGENCY]</font>";
         else if (req.getUrgency().equalsIgnoreCase("Urgent")) urgencyTag = " <font color='orange'>[URGENT]</font>";
 
-        String info = "<html><font size='5'>" + statusIcon + " Request to: " + req.getDonorEmail() + urgencyTag + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></font></html>";
+        String info = "<html><font size='5'>" + statusIcon + " Request to: " + DataStore.escapeHtml(req.getDonorEmail()) + urgencyTag + "<br>Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></font></html>";
         row.add(new JLabel(info), BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -615,5 +616,14 @@ public class DonorProfilePage extends JFrame {
         label.setFont(new Font("Dialog", Font.PLAIN, 20));
         label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         return label;
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        if (currentDonor == null) {
+            super.setVisible(false);
+            return;
+        }
+        super.setVisible(b);
     }
 }

@@ -63,7 +63,7 @@ public class UserHomePage extends JFrame {
         gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        detailsLabel = new JLabel("<html><b>Location:</b> " + user.getLocation() + ", " + user.getState() + "</html>");
+        detailsLabel = new JLabel("<html><b>Location:</b> " + DataStore.escapeHtml(user.getLocation()) + ", " + DataStore.escapeHtml(user.getState()) + "</html>");
         detailsLabel.setFont(detailFont);
         gbc.gridx = 0; gbc.gridy = 0; navPanel.add(detailsLabel, gbc);
 
@@ -134,6 +134,7 @@ public class UserHomePage extends JFrame {
         });
 
         logoutBtn.addActionListener(e -> {
+            DataStore.currentUser = null;
             new LoginPage().setVisible(true);
             this.dispose();
         });
@@ -492,7 +493,7 @@ public class UserHomePage extends JFrame {
         if (req.getUrgency().equalsIgnoreCase("Emergency")) urgencyTag = " <font color='red'>[EMERGENCY]</font>";
         else if (req.getUrgency().equalsIgnoreCase("Urgent")) urgencyTag = " <font color='orange'>[URGENT]</font>";
 
-        String info = "<html><font size='5'>" + statusIcon + " Request to: " + req.getDonorEmail() + urgencyTag + "<br>" +
+        String info = "<html><font size='5'>" + statusIcon + " Request to: " + DataStore.escapeHtml(req.getDonorEmail()) + urgencyTag + "<br>" +
                      "Status: <b><font color='" + statusColor + "'>" + req.getStatus() + "</font></b></font></html>";
         row.add(new JLabel(info), BorderLayout.CENTER);
 
@@ -522,5 +523,14 @@ public class UserHomePage extends JFrame {
         
         row.add(btnPanel, BorderLayout.EAST);
         return row;
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        if (currentUser == null) {
+            super.setVisible(false);
+            return;
+        }
+        super.setVisible(b);
     }
 }

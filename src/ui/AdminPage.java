@@ -40,7 +40,7 @@ public class AdminPage extends JFrame {
         headerLabel.setIcon(new VectorIcon(VectorIcon.Type.SHIELD, 40));
         headerLabel.setForeground(new Color(180, 0, 0));
         headerLabel.setFont(new Font("Dialog", Font.BOLD, 32));
-        topPanel.add(headerLabel, BorderLayout.CENTER);
+        topPanel.add(headerLabel, BorderLayout.NORTH);
 
         // Stats Dashboard
         JPanel statsWrapper = new JPanel(new BorderLayout(0, 10));
@@ -259,7 +259,7 @@ public class AdminPage extends JFrame {
 
         String role = isDonor ? "[DONOR]" : "[USER]";
         String status = user.isBlocked() ? "<font color='red'>BLOCKED</font>" : "<font color='green'>ACTIVE</font>";
-        JLabel info = new JLabel("<html><font size='5'><b>" + role + " " + user.getName() + "</b><br>" + user.getEmail() + " | " + status + "</font></html>");
+        JLabel info = new JLabel("<html><font size='5'><b>" + role + " " + DataStore.escapeHtml(user.getName()) + "</b><br>" + DataStore.escapeHtml(user.getEmail()) + " | " + status + "</font></html>");
         row.add(info, BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel(new FlowLayout());
@@ -308,8 +308,8 @@ public class AdminPage extends JFrame {
         if (req.getUrgency().equalsIgnoreCase("Emergency")) urgencyTag = " <font color='red'>[EMERGENCY]</font>";
         else if (req.getUrgency().equalsIgnoreCase("Urgent")) urgencyTag = " <font color='orange'>[URGENT]</font>";
 
-        JLabel info = new JLabel("<html><font size='5'><b>" + req.getRequesterName() + " -> " + req.getDonorEmail() + "</b>" + urgencyTag + "<br>" +
-                               "Group: " + req.getBloodGroup() + " | Status: " + req.getStatus() + "</font></html>");
+        JLabel info = new JLabel("<html><font size='5'><b>" + DataStore.escapeHtml(req.getRequesterName()) + " -> " + DataStore.escapeHtml(req.getDonorEmail()) + "</b>" + urgencyTag + "<br>" +
+                               "Group: " + DataStore.escapeHtml(req.getBloodGroup()) + " | Status: " + DataStore.escapeHtml(req.getStatus()) + "</font></html>");
         row.add(info, BorderLayout.CENTER);
 
         RoundedButton detailsBtn = new RoundedButton("View Request", new Color(70, 70, 70), new Color(100, 100, 100));
@@ -326,8 +326,8 @@ public class AdminPage extends JFrame {
         row.setBackground(Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
         
-        JLabel logLbl = new JLabel("<html><font size='4'>[" + log.getLogDate() + "] <b>Admin: " + log.getAdminId() + "</b> - " + 
-                                  log.getAction() + " (Target: " + log.getTargetEmail() + ")</font></html>");
+        JLabel logLbl = new JLabel("<html><font size='4'>[" + log.getLogDate() + "] <b>Admin: " + DataStore.escapeHtml(log.getAdminId()) + "</b> - " + 
+                                  DataStore.escapeHtml(log.getAction()) + " (Target: " + DataStore.escapeHtml(log.getTargetEmail()) + ")</font></html>");
         row.add(logLbl, BorderLayout.CENTER);
         return row;
     }
@@ -348,7 +348,7 @@ public class AdminPage extends JFrame {
                       "<b>Availability:</b> " + (d.isAvailable() ? "Available for Donation" : "Busy") + "<br>" +
                       "<b>Medical Conditions:</b><br>" +
                       "<p style='background-color: #f0f0f0; padding: 5px; border: 1px solid #ccc;'>" + 
-                      (d.getMedicalCondition().isEmpty() ? "None reported" : d.getMedicalCondition()) + "</p>";
+                      (DataStore.safe(d.getMedicalCondition()).isEmpty() ? "None reported" : DataStore.escapeHtml(d.getMedicalCondition())) + "</p>";
         }
         details += "</body></html>";
         

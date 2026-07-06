@@ -47,6 +47,9 @@ public class BloodRequest {
     public Date getRequestDate() { 
         return requestDate != null ? new Date(requestDate.getTime()) : null; 
     }
+    public void setRequestDate(Date requestDate) {
+        this.requestDate = requestDate != null ? new Date(requestDate.getTime()) : null;
+    }
     public String getStatus() { return status; }
     public String getUrgency() { return urgency; }
     public String getPatientName() { return patientName; }

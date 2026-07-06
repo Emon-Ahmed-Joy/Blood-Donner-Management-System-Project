@@ -39,7 +39,8 @@ public class DataStore {
     public static boolean checkPassword(String inputPassword, String storedPassword) {
         if (inputPassword == null || storedPassword == null) return false;
         String hashed = hashPassword(inputPassword);
-        return storedPassword.equals(hashed) || storedPassword.equals(inputPassword);
+        return java.security.MessageDigest.isEqual(storedPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8), 
+                                                 hashed.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public static String escapeHtml(String text) {
@@ -129,7 +130,10 @@ public class DataStore {
             try {
                 stmt.execute("ALTER TABLE blood_requests ADD COLUMN urgency VARCHAR(20) DEFAULT 'Normal'");
             } catch (SQLException e) {
-                // Column likely already exists, ignore
+                // Ignore if it's "Duplicate column name" (MySQL error code 1060)
+                if (e.getErrorCode() != 1060) {
+                    throw e;
+                }
             }
 
             // 6. Insert default admin if table is empty
@@ -142,6 +146,10 @@ public class DataStore {
                     }
                 }
             }
+            
+            // 7. Hash any existing plain-text passwords in database (e.g. from schema.sql)
+            stmt.execute("UPDATE users SET password = SHA2(password, 256) WHERE LENGTH(password) != 64");
+            stmt.execute("UPDATE admins SET password = SHA2(password, 256) WHERE LENGTH(password) != 64");
         } catch (SQLException e) {
             e.printStackTrace();
             showDbError(e);
@@ -210,6 +218,7 @@ public class DataStore {
                     );
                     req.setId(rs.getInt("id"));
                     req.setStatus(rs.getString("status"));
+                    req.setRequestDate(rs.getTimestamp("request_date"));
                     
                     // Handle potential missing urgency column gracefully if initialization failed
                     try {
@@ -355,7 +364,7 @@ public class DataStore {
             
             req.setStatus(newStatus);
             for (User u : users) {
-                if (u.getEmail().equals(req.getRequesterEmail())) {
+                if (u.getEmail().equalsIgnoreCase(req.getRequesterEmail())) {
                     u.setHasUpdate(true);
                     updateUser(u);
                     break;
@@ -379,7 +388,7 @@ public class DataStore {
 
     public static void notifyDonorOfRequest(String donorEmail) {
         for (User u : users) {
-            if (u.getEmail().equals(donorEmail)) {
+            if (u.getEmail().equalsIgnoreCase(donorEmail)) {
                 u.setHasUpdate(true);
                 updateUser(u);
                 break;
