@@ -32,3 +32,7 @@ bin/
 
 .gemini/
 gha-creds-*.json
+
+# Runtime logs
+*.log
+app.log

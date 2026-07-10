@@ -15,7 +15,10 @@ CREATE TABLE IF NOT EXISTS users (
     -- Donor specific fields
     blood_group VARCHAR(5),
     medical_condition TEXT,
-    is_available BOOLEAN DEFAULT TRUE
+    is_available BOOLEAN DEFAULT TRUE,
+    last_donation_date DATE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
 );
 
 -- Table for Admins

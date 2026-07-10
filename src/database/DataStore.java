@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import model.*;
+import ui.*;
 
 /**
  * Data store for the application, backed by a MySQL database.
@@ -13,6 +14,7 @@ public class DataStore {
     public static List<User> users = new ArrayList<>();
     public static List<Admin> admins = new ArrayList<>();
     public static List<Donor> donors = new ArrayList<>();
+    public static List<User> deletedUsers = new ArrayList<>();
     public static List<BloodRequest> bloodRequests = new ArrayList<>();
     public static List<AuditLog> auditLogs = new ArrayList<>();
 
@@ -86,7 +88,10 @@ public class DataStore {
                                       "has_update BOOLEAN DEFAULT FALSE, " +
                                       "blood_group VARCHAR(5), " +
                                       "medical_condition TEXT, " +
-                                      "is_available BOOLEAN DEFAULT TRUE" +
+                                      "is_available BOOLEAN DEFAULT TRUE, " +
+                                      "last_donation_date DATE, " +
+                                      "is_deleted BOOLEAN DEFAULT FALSE, " +
+                                      "deleted_at TIMESTAMP NULL DEFAULT NULL" +
                                       ")";
             stmt.execute(createUsersTable);
 
@@ -136,6 +141,23 @@ public class DataStore {
                 }
             }
 
+            // Ensure is_deleted, deleted_at, and last_donation_date columns exist in users
+            try {
+                stmt.execute("ALTER TABLE users ADD COLUMN last_donation_date DATE");
+            } catch (SQLException e) {
+                if (e.getErrorCode() != 1060) throw e;
+            }
+            try {
+                stmt.execute("ALTER TABLE users ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE");
+            } catch (SQLException e) {
+                if (e.getErrorCode() != 1060) throw e;
+            }
+            try {
+                stmt.execute("ALTER TABLE users ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL");
+            } catch (SQLException e) {
+                if (e.getErrorCode() != 1060) throw e;
+            }
+
             // 6. Insert default admin if table is empty
             try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM admins")) {
                 if (rs.next() && rs.getInt(1) == 0) {
@@ -160,6 +182,7 @@ public class DataStore {
         users.clear();
         admins.clear();
         donors.clear();
+        deletedUsers.clear();
         bloodRequests.clear();
         auditLogs.clear();
 
@@ -173,7 +196,7 @@ public class DataStore {
             }
 
             // Load Users and Donors
-            String userQuery = "SELECT * FROM users";
+            String userQuery = "SELECT * FROM users WHERE is_deleted = FALSE";
             try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(userQuery)) {
                 while (rs.next()) {
                     User u;
@@ -185,12 +208,14 @@ public class DataStore {
                     boolean isDonor = rs.getBoolean("is_donor");
                     boolean isBlocked = rs.getBoolean("is_blocked");
                     boolean hasUpdate = rs.getBoolean("has_update");
+                    Date lastDonationDate = rs.getDate("last_donation_date");
 
                     if (isDonor) {
                         Donor d = new Donor(name, email, password, rs.getString("blood_group"), state, location, rs.getString("medical_condition"));
                         d.setAvailable(rs.getBoolean("is_available"));
                         d.setBlocked(isBlocked);
                         d.setHasUpdate(hasUpdate);
+                        if (lastDonationDate != null) d.setLastDonationDate(lastDonationDate.toLocalDate());
                         u = d;
                         donors.add(d);
                     } else {
@@ -202,8 +227,48 @@ public class DataStore {
                 }
             }
 
-            // Load Blood Requests
-            String requestQuery = "SELECT * FROM blood_requests";
+            // Load Deleted Users
+            String deletedUserQuery = "SELECT * FROM users WHERE is_deleted = TRUE";
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(deletedUserQuery)) {
+                while (rs.next()) {
+                    User u;
+                    String name = rs.getString("name");
+                    String email = rs.getString("email");
+                    String password = rs.getString("password");
+                    String state = rs.getString("state");
+                    String location = rs.getString("location");
+                    boolean isDonor = rs.getBoolean("is_donor");
+                    boolean isBlocked = rs.getBoolean("is_blocked");
+                    boolean hasUpdate = rs.getBoolean("has_update");
+                    Date lastDonationDate = rs.getDate("last_donation_date");
+                    java.sql.Timestamp deletedAt = rs.getTimestamp("deleted_at");
+
+                    if (isDonor) {
+                        Donor d = new Donor(name, email, password, rs.getString("blood_group"), state, location, rs.getString("medical_condition"));
+                        d.setAvailable(rs.getBoolean("is_available"));
+                        d.setBlocked(isBlocked);
+                        d.setHasUpdate(hasUpdate);
+                        d.setDeleted(true);
+                        d.setDeletedAt(deletedAt);
+                        if (lastDonationDate != null) d.setLastDonationDate(lastDonationDate.toLocalDate());
+                        u = d;
+                    } else {
+                        u = new User(name, email, password, state, location, false);
+                        u.setBlocked(isBlocked);
+                        u.setHasUpdate(hasUpdate);
+                        u.setDeleted(true);
+                        u.setDeletedAt(deletedAt);
+                    }
+                    deletedUsers.add(u);
+                }
+            }
+
+            // Load Blood Requests (filtering out soft-deleted requesters or donors)
+            String requestQuery = "SELECT r.* FROM blood_requests r " +
+                                  "LEFT JOIN users req ON r.requester_email = req.email " +
+                                  "LEFT JOIN users don ON r.donor_email = don.email " +
+                                  "WHERE (req.is_deleted = FALSE OR req.is_deleted IS NULL) " +
+                                  "  AND (don.is_deleted = FALSE OR don.is_deleted IS NULL)";
             try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(requestQuery)) {
                 while (rs.next()) {
                     BloodRequest req = new BloodRequest(
@@ -248,7 +313,7 @@ public class DataStore {
     }
 
     public static void addUser(User u) {
-        String query = "INSERT INTO users (email, name, password, state, location, is_donor, blood_group, medical_condition, is_available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO users (email, name, password, state, location, is_donor, blood_group, medical_condition, is_available, last_donation_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, u.getEmail());
             pstmt.setString(2, u.getName());
@@ -262,10 +327,12 @@ public class DataStore {
                 pstmt.setString(7, d.getBloodGroup());
                 pstmt.setString(8, d.getMedicalCondition());
                 pstmt.setBoolean(9, d.isAvailable());
+                pstmt.setDate(10, d.getLastDonationDate() != null ? java.sql.Date.valueOf(d.getLastDonationDate()) : null);
             } else {
                 pstmt.setNull(7, java.sql.Types.VARCHAR);
                 pstmt.setNull(8, java.sql.Types.VARCHAR);
                 pstmt.setBoolean(9, false);
+                pstmt.setNull(10, java.sql.Types.DATE);
             }
             
             pstmt.executeUpdate();
@@ -277,7 +344,7 @@ public class DataStore {
     }
 
     public static void updateUser(User u) {
-        String query = "UPDATE users SET name=?, password=?, state=?, location=?, is_donor=?, is_blocked=?, has_update=?, blood_group=?, medical_condition=?, is_available=? WHERE email=?";
+        String query = "UPDATE users SET name=?, password=?, state=?, location=?, is_donor=?, is_blocked=?, has_update=?, blood_group=?, medical_condition=?, is_available=?, last_donation_date=? WHERE email=?";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, u.getName());
             pstmt.setString(2, u.getPassword());
@@ -292,12 +359,14 @@ public class DataStore {
                 pstmt.setString(8, d.getBloodGroup());
                 pstmt.setString(9, d.getMedicalCondition());
                 pstmt.setBoolean(10, d.isAvailable());
+                pstmt.setDate(11, d.getLastDonationDate() != null ? java.sql.Date.valueOf(d.getLastDonationDate()) : null);
             } else {
                 pstmt.setNull(8, java.sql.Types.VARCHAR);
                 pstmt.setNull(9, java.sql.Types.VARCHAR);
                 pstmt.setBoolean(10, false);
+                pstmt.setNull(11, java.sql.Types.DATE);
             }
-            pstmt.setString(11, u.getEmail());
+            pstmt.setString(12, u.getEmail());
             pstmt.executeUpdate();
 
             // Synchronize in-memory cache
@@ -363,6 +432,19 @@ public class DataStore {
             pstmt.executeUpdate();
             
             req.setStatus(newStatus);
+            
+            // If request completed, update donor's last donation date and mark unavailable
+            if ("Completed".equalsIgnoreCase(newStatus) && req.getDonorEmail() != null) {
+                for (Donor d : donors) {
+                    if (d.getEmail().equalsIgnoreCase(req.getDonorEmail())) {
+                        d.setLastDonationDate(java.time.LocalDate.now());
+                        d.setAvailable(false);
+                        updateUser(d);
+                        break;
+                    }
+                }
+            }
+            
             for (User u : users) {
                 if (u.getEmail().equalsIgnoreCase(req.getRequesterEmail())) {
                     u.setHasUpdate(true);
@@ -370,6 +452,23 @@ public class DataStore {
                     break;
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean isEligible(Donor d) {
+        if (d.getLastDonationDate() == null) return true;
+        return d.getLastDonationDate().plusDays(90).isBefore(java.time.LocalDate.now());
+    }
+
+    public static void clearDonationCooldown(Donor d) {
+        String query = "UPDATE users SET last_donation_date = NULL WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, d.getEmail());
+            pstmt.executeUpdate();
+            d.setLastDonationDate(null);
+            d.setAvailable(true);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -417,41 +516,80 @@ public class DataStore {
     }
 
     public static void deleteUser(User u) {
-        String deleteRequestsQuery = "DELETE FROM blood_requests WHERE requester_email=? OR donor_email=?";
-        String deleteUserQuery = "DELETE FROM users WHERE email=?";
-        
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                try (PreparedStatement pstmt1 = conn.prepareStatement(deleteRequestsQuery)) {
-                    pstmt1.setString(1, u.getEmail());
-                    pstmt1.setString(2, u.getEmail());
-                    pstmt1.executeUpdate();
-                }
-                try (PreparedStatement pstmt2 = conn.prepareStatement(deleteUserQuery)) {
-                    pstmt2.setString(1, u.getEmail());
-                    int rows = pstmt2.executeUpdate();
-                    if (rows > 0) {
-                        conn.commit();
-                        
-                        // LOG THE DELETION BEFORE REFRESHING CACHES
-                        addAuditLog("Deleted User Account", u.getEmail());
+        String query = "UPDATE users SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, u.getEmail());
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                // LOG THE DELETION BEFORE REFRESHING CACHES
+                addAuditLog("Deleted User Account", u.getEmail());
 
-                        users.removeIf(user -> user.getEmail().equalsIgnoreCase(u.getEmail()));
-                        donors.removeIf(donor -> donor.getEmail().equalsIgnoreCase(u.getEmail()));
-                        bloodRequests.removeIf(req -> req.getRequesterEmail().equalsIgnoreCase(u.getEmail()) || 
-                                                     req.getDonorEmail().equalsIgnoreCase(u.getEmail()));
-                        
-                        javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " deleted successfully.");
-                    } else {
-                        conn.rollback();
+                // If this user is currently logged in, log them out immediately
+                if (currentUser != null && currentUser.getEmail().equalsIgnoreCase(u.getEmail())) {
+                    currentUser = null;
+                    for (java.awt.Window window : java.awt.Window.getWindows()) {
+                        if (window instanceof UserHomePage || window instanceof DonorProfilePage || window instanceof UserSearchPage) {
+                            window.dispose();
+                        }
                     }
+                    new LoginPage().setVisible(true);
                 }
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.setAutoCommit(true);
+
+                loadDataFromDatabase();
+                javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " moved to Recycle Bin.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void restoreUser(User u) {
+        String query = "UPDATE users SET is_deleted = FALSE, deleted_at = NULL WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, u.getEmail());
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                addAuditLog("Restored User Account", u.getEmail());
+                loadDataFromDatabase();
+                javax.swing.JOptionPane.showMessageDialog(null, "User " + u.getName() + " restored successfully.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void clearAuditLogs(String adminId) {
+        // First, log the clearing action with the admin's ID
+        String oldAdminId = currentAdminId;
+        currentAdminId = adminId;
+        
+        String query = "DELETE FROM audit_logs";
+        try (Connection conn = DatabaseConnection.getConnection(); Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(query);
+            auditLogs.clear();
+            
+            // Log the clearing action (this adds a new entry after deletion)
+            addAuditLog("Cleared all audit logs", "System");
+            
+            javax.swing.JOptionPane.showMessageDialog(null,
+                "All audit logs have been cleared successfully.",
+                "Logs Cleared", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(null,
+                "Failed to clear audit logs: " + e.getMessage(),
+                "Database Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        } finally {
+            currentAdminId = oldAdminId;
+        }
+    }
+
+    public static void cleanupDeletedUsers() {
+        String query = "DELETE FROM users WHERE is_deleted = TRUE AND deleted_at < DATE_SUB(NOW(), INTERVAL 30 DAY)";
+        try (Connection conn = DatabaseConnection.getConnection(); Statement stmt = conn.createStatement()) {
+            int count = stmt.executeUpdate(query);
+            if (count > 0) {
+                System.out.println("Cleaned up " + count + " expired soft-deleted user records.");
             }
         } catch (SQLException e) {
             e.printStackTrace();

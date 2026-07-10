@@ -11,7 +11,7 @@ import javax.swing.*;
  */
 public class VectorIcon implements Icon {
     public enum Type {
-        USER, EMAIL, LOCK, KEY, ADMIN, PLUS, EDIT, SEARCH, SHIELD, HEART
+        USER, EMAIL, LOCK, KEY, ADMIN, PLUS, EDIT, SEARCH, SHIELD, HEART, TRASH
     }
 
     private final Type type;
@@ -105,6 +105,26 @@ public class VectorIcon implements Icon {
                 g2.fill(heart);
                 g2.fill(new Ellipse2D.Float(s * 0.22f, s * 0.15f, s * 0.35f, s * 0.35f));
                 g2.fill(new Ellipse2D.Float(s * 0.43f, s * 0.15f, s * 0.35f, s * 0.35f));
+                break;
+            case TRASH:
+                g2.setStroke(new BasicStroke(s * 0.08f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                // Lid handle
+                g2.draw(new Arc2D.Float(s * 0.4f, s * 0.1f, s * 0.2f, s * 0.15f, 0, 180, Arc2D.OPEN));
+                // Lid line
+                g2.draw(new Line2D.Float(s * 0.2f, s * 0.25f, s * 0.8f, s * 0.25f));
+                // Bin body
+                Path2D bin = new Path2D.Float();
+                bin.moveTo(s * 0.28f, s * 0.25f);
+                bin.lineTo(s * 0.32f, s * 0.85f);
+                bin.quadTo(s * 0.33f, s * 0.9f, s * 0.38f, s * 0.9f);
+                bin.lineTo(s * 0.62f, s * 0.9f);
+                bin.quadTo(s * 0.67f, s * 0.9f, s * 0.68f, s * 0.85f);
+                bin.lineTo(s * 0.72f, s * 0.25f);
+                g2.draw(bin);
+                // Vertical lines in bin
+                g2.draw(new Line2D.Float(s * 0.42f, s * 0.35f, s * 0.44f, s * 0.8f));
+                g2.draw(new Line2D.Float(s * 0.5f, s * 0.35f, s * 0.5f, s * 0.8f));
+                g2.draw(new Line2D.Float(s * 0.58f, s * 0.35f, s * 0.56f, s * 0.8f));
                 break;
             default:
                 g2.draw(new Rectangle2D.Float(s * 0.1f, s * 0.1f, s * 0.8f, s * 0.8f));

@@ -35,7 +35,7 @@ public class UserHomePage extends JFrame {
         JPanel card = GradientPanel.createCard(1100, 650);
 
         // Header
-        JLabel welcomeLabel = new JLabel("Welcome, " + user.getName(), SwingConstants.CENTER);
+        JLabel welcomeLabel = new JLabel("<html><center>Welcome, " + user.getName() + "</center></html>", SwingConstants.CENTER);
         welcomeLabel.setForeground(new Color(180, 0, 0));
         welcomeLabel.setFont(new Font("Dialog", Font.BOLD, 36));
         card.add(welcomeLabel, BorderLayout.NORTH);

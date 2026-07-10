@@ -66,12 +66,21 @@ public class DonorProfilePage extends JFrame {
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         detailsPanel.setBorder(BorderFactory.createTitledBorder(null, "My Account Details", 0, 0, labelFont));
 
-        detailsPanel.add(createDetailLabel("Name: " + DataStore.escapeHtml(donor.getName())));
-        detailsPanel.add(createDetailLabel("Email: " + DataStore.escapeHtml(donor.getEmail())));
+        detailsPanel.add(createDetailLabel("<html>Name: " + DataStore.escapeHtml(donor.getName()) + "</html>"));
+        detailsPanel.add(createDetailLabel("<html>Email: " + DataStore.escapeHtml(donor.getEmail()) + "</html>"));
         detailsPanel.add(createDetailLabel("<html><font color='red'>&hearts;</font> Blood Group: " + DataStore.escapeHtml(DataStore.safe(donor.getBloodGroup())) + "</html>"));
         detailsPanel.add(createDetailLabel("<html>Location: " + DataStore.escapeHtml(DataStore.safe(donor.getLocation())) + ", " + DataStore.escapeHtml(DataStore.safe(donor.getState())) + "</html>"));
         
-        statusLabel = createDetailLabel("Status: " + (donor.isAvailable() ? "Available" : "Busy"));
+        String statusText;
+        if (donor.isAvailable()) {
+            statusText = "Available";
+        } else if (donor.getLastDonationDate() != null && !DataStore.isEligible(donor)) {
+            java.time.LocalDate eligibleDate = donor.getLastDonationDate().plusDays(90);
+            statusText = "Will be available for donation from " + eligibleDate;
+        } else {
+            statusText = "Busy";
+        }
+        statusLabel = createDetailLabel("<html>Status: " + statusText + "</html>");
         detailsPanel.add(statusLabel);
         detailsPanel.add(Box.createVerticalStrut(20));
 
@@ -306,6 +315,9 @@ public class DonorProfilePage extends JFrame {
         });
 
         JCheckBox availCheck = new JCheckBox("Available for Donation", currentDonor.isAvailable());
+        if (!DataStore.isEligible(currentDonor)) {
+            availCheck.setToolTipText("You are on cooldown. Checking this will require password confirmation.");
+        }
 
         nameF.setFont(detailFont);
         stateF.setFont(detailFont);
@@ -356,7 +368,47 @@ public class DonorProfilePage extends JFrame {
             currentDonor.setBloodGroup(selectedGroup);
             
             currentDonor.setMedicalCondition(medicalA.getText().trim());
-            currentDonor.setAvailable(availCheck.isSelected());
+            
+            boolean wantsToBeAvailable = availCheck.isSelected();
+            boolean isOnCooldown = !DataStore.isEligible(currentDonor);
+            boolean isChangingToAvailable = wantsToBeAvailable && !currentDonor.isAvailable();
+            
+            // If on cooldown and trying to switch from unavailable to available, require password
+            if (isOnCooldown && isChangingToAvailable) {
+                UIManager.put("OptionPane.messageFont", labelFont);
+                JPasswordField confirmPassField = new JPasswordField(15);
+                confirmPassField.setFont(detailFont);
+                
+                int result = JOptionPane.showConfirmDialog(dialog,
+                    new Object[]{
+                        "<html><font color='red'><b>⚠ Cooldown Override Required</b></font><br>" +
+                        "You are within the 90-day donation cooldown period.<br>" +
+                        "Enter your password to confirm you want to override this:<br><br></html>",
+                        confirmPassField
+                    },
+                    "Password Confirmation Required",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                
+                if (result == JOptionPane.OK_OPTION) {
+                    String confirmPass = new String(confirmPassField.getPassword());
+                    if (confirmPass.isEmpty() || !DataStore.checkPassword(confirmPass, currentDonor.getPassword())) {
+                        UIManager.put("OptionPane.messageFont", labelFont);
+                        JOptionPane.showMessageDialog(dialog,
+                            "Incorrect password! Availability change cancelled.",
+                            "Verification Failed", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    // Password correct — clear cooldown (this also sets available=true)
+                    DataStore.clearDonationCooldown(currentDonor);
+                } else {
+                    // User cancelled the password dialog
+                    availCheck.setSelected(false);
+                }
+            } else {
+                // Normal case: no cooldown, or not changing to available — just set it
+                currentDonor.setAvailable(wantsToBeAvailable);
+            }
             
             DataStore.updateUser(currentDonor);
             
@@ -370,9 +422,23 @@ public class DonorProfilePage extends JFrame {
         dialog.setVisible(true);
     }
 
+    private void refreshStatusLabel() {
+        String statusText;
+        if (currentDonor.isAvailable()) {
+            statusText = "Available";
+        } else if (currentDonor.getLastDonationDate() != null && !DataStore.isEligible(currentDonor)) {
+            java.time.LocalDate eligibleDate = currentDonor.getLastDonationDate().plusDays(90);
+            statusText = "Will be available for donation from " + eligibleDate;
+        } else {
+            statusText = "Busy";
+        }
+        statusLabel.setText("<html>Status: " + statusText + "</html>");
+    }
+
     private void refreshAllRequests() {
         refreshIncomingRequests();
         refreshSentRequests();
+        refreshStatusLabel();
     }
 
     private void refreshIncomingRequests() {

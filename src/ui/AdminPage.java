@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.*;
+import model.Admin;
 import model.Donor;
 import model.User;
 import model.BloodRequest;
@@ -16,7 +17,7 @@ import model.AuditLog;
  * @author Emon Ahmed Joy
  */
 public class AdminPage extends JFrame {
-    private JPanel usersContainer, donorsContainer, requestsContainer, logsContainer;
+    private JPanel usersContainer, donorsContainer, requestsContainer, logsContainer, recycleBinContainer;
     private JLabel donorStatsLbl, userStatsLbl, requestStatsLbl;
     private JPanel distributionPanel;
     private JTextField searchField;
@@ -83,6 +84,7 @@ public class AdminPage extends JFrame {
         usersContainer = createTab(tabs, "Manage Users", VectorIcon.Type.USER);
         requestsContainer = createTab(tabs, "System Requests", VectorIcon.Type.EMAIL);
         logsContainer = createTab(tabs, "Audit Logs", VectorIcon.Type.LOCK);
+        recycleBinContainer = createTab(tabs, "Recycle Bin", VectorIcon.Type.TRASH);
 
         centerPanel.add(tabs, BorderLayout.CENTER);
         card.add(centerPanel, BorderLayout.CENTER);
@@ -155,7 +157,7 @@ public class AdminPage extends JFrame {
         Map<String, Integer> groupCounts = new HashMap<>();
         for (Donor d : DataStore.donors) {
             totalD++;
-            if (d.isAvailable()) activeD++; else busyD++;
+            if (d.isAvailable() && DataStore.isEligible(d)) activeD++; else busyD++;
             String group = d.getBloodGroup();
             groupCounts.put(group, groupCounts.getOrDefault(group, 0) + 1);
         }
@@ -200,6 +202,7 @@ public class AdminPage extends JFrame {
         refreshUsers(filter);
         refreshRequests();
         refreshAuditLogs();
+        refreshRecycleBin(filter);
         updateStats();
     }
 
@@ -240,11 +243,76 @@ public class AdminPage extends JFrame {
 
     private void refreshAuditLogs() {
         logsContainer.removeAll();
+        
+        // Header with Clear button
+        JPanel logHeader = new JPanel(new BorderLayout());
+        logHeader.setOpaque(false);
+        logHeader.setMaximumSize(new Dimension(1100, 50));
+        
+        JLabel logTitle = new JLabel("  Audit Log History (" + DataStore.auditLogs.size() + " entries)");
+        logTitle.setFont(new Font("Dialog", Font.BOLD, 18));
+        logHeader.add(logTitle, BorderLayout.WEST);
+        
+        if (!DataStore.auditLogs.isEmpty()) {
+            RoundedButton clearLogsBtn = new RoundedButton("Clear All Logs", new Color(200, 0, 0), new Color(255, 50, 50));
+            clearLogsBtn.setPreferredSize(new Dimension(160, 40));
+            clearLogsBtn.addActionListener(e -> showClearLogsDialog());
+            logHeader.add(clearLogsBtn, BorderLayout.EAST);
+        }
+        
+        logsContainer.add(logHeader);
+        logsContainer.add(Box.createVerticalStrut(10));
+        
         for (AuditLog log : DataStore.auditLogs) {
             logsContainer.add(createLogRow(log));
             logsContainer.add(Box.createVerticalStrut(5));
         }
         logsContainer.revalidate(); logsContainer.repaint();
+    }
+
+    private void refreshRecycleBin(String filter) {
+        recycleBinContainer.removeAll();
+        for (User u : DataStore.deletedUsers) {
+            if (filter.isEmpty() || u.getEmail().toLowerCase().contains(filter)) {
+                recycleBinContainer.add(createDeletedUserRow(u, u.isDonor()));
+                recycleBinContainer.add(Box.createVerticalStrut(10));
+            }
+        }
+        recycleBinContainer.revalidate(); recycleBinContainer.repaint();
+    }
+
+    private JPanel createDeletedUserRow(User user, boolean isDonor) {
+        JPanel row = new JPanel(new BorderLayout(15, 0));
+        row.setMaximumSize(new Dimension(1100, 100));
+        row.setPreferredSize(new Dimension(1100, 100));
+        row.setBackground(new Color(245, 245, 245));
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
+
+        String role = isDonor ? "[DONOR]" : "[USER]";
+        String deletedTimeStr = user.getDeletedAt() != null ? user.getDeletedAt().toString() : "Unknown";
+        JLabel info = new JLabel("<html><font size='5'><b>" + role + " " + DataStore.escapeHtml(user.getName()) + "</b><br>" + DataStore.escapeHtml(user.getEmail()) + " | <font color='red'>Deleted on: " + deletedTimeStr + "</font></font></html>");
+        row.add(info, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout());
+        btnPanel.setOpaque(false);
+        
+        RoundedButton restoreBtn = new RoundedButton("Restore", new Color(40, 167, 69), new Color(33, 136, 56));
+        Dimension btnSize = new Dimension(120, 45);
+        restoreBtn.setPreferredSize(btnSize);
+
+        restoreBtn.addActionListener(e -> {
+            if (JOptionPane.showConfirmDialog(this, "Restore " + user.getName() + "'s account?", "Confirm Restore", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                DataStore.restoreUser(user);
+                refreshAllData();
+            }
+        });
+
+        btnPanel.add(restoreBtn);
+        row.add(btnPanel, BorderLayout.EAST);
+        return row;
     }
 
     private JPanel createUserRow(User user, boolean isDonor) {
@@ -343,9 +411,18 @@ public class AdminPage extends JFrame {
         
         if (user instanceof Donor) {
             Donor d = (Donor) user;
+            String availText;
+            if (d.isAvailable()) {
+                availText = "Available for Donation";
+            } else if (d.getLastDonationDate() != null && !DataStore.isEligible(d)) {
+                java.time.LocalDate eligibleDate = d.getLastDonationDate().plusDays(90);
+                availText = "On Cooldown — Will be available from " + eligibleDate;
+            } else {
+                availText = "Busy (Manually Unavailable)";
+            }
             details += "<hr>" +
                       "<b>Blood Group:</b> <font color='red'>" + d.getBloodGroup() + "</font><br>" +
-                      "<b>Availability:</b> " + (d.isAvailable() ? "Available for Donation" : "Busy") + "<br>" +
+                      "<b>Availability:</b> " + availText + "<br>" +
                       "<b>Medical Conditions:</b><br>" +
                       "<p style='background-color: #f0f0f0; padding: 5px; border: 1px solid #ccc;'>" + 
                       (DataStore.safe(d.getMedicalCondition()).isEmpty() ? "None reported" : DataStore.escapeHtml(d.getMedicalCondition())) + "</p>";
@@ -360,5 +437,91 @@ public class AdminPage extends JFrame {
         String details = "From: " + req.getRequesterName() + "\nTo: " + req.getDonorEmail() + "\nUrgency: " + req.getUrgency() + "\nGroup: " + req.getBloodGroup() + "\nHospital: " + req.getHospitalName() + "\nStatus: " + req.getStatus();
         UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
         JOptionPane.showMessageDialog(this, details, "Request Details", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showClearLogsDialog() {
+        JDialog dialog = new JDialog(this, "Admin Authorization Required", true);
+        dialog.setSize(480, 320);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(12, 15, 12, 15);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField adminIdField = new JTextField(15);
+        adminIdField.setText(DataStore.currentAdminId != null ? DataStore.currentAdminId : "");
+        JPasswordField passwordField = new JPasswordField(15);
+        adminIdField.setFont(fieldFont);
+        passwordField.setFont(fieldFont);
+
+        int r = 0;
+        JLabel warnLbl = new JLabel("<html><font color='red'><b>⚠ This will permanently delete all audit logs!</b></font></html>");
+        warnLbl.setFont(new Font("Dialog", Font.BOLD, 16));
+        gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2;
+        dialog.add(warnLbl, gbc); r++;
+        gbc.gridwidth = 1;
+
+        JLabel idLbl = new JLabel("Admin ID:");
+        idLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r; gbc.weightx = 0.3;
+        dialog.add(idLbl, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        dialog.add(adminIdField, gbc); r++;
+
+        JLabel passLbl = new JLabel("Password:");
+        passLbl.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = r; gbc.weightx = 0.3;
+        dialog.add(passLbl, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        dialog.add(passwordField, gbc); r++;
+
+        RoundedButton clearBtn = new RoundedButton("Clear All Logs", new Color(200, 0, 0), new Color(255, 50, 50));
+        clearBtn.setPreferredSize(new Dimension(220, 45));
+        gbc.gridx = 0; gbc.gridy = r; gbc.gridwidth = 2; gbc.weightx = 1.0;
+        dialog.add(clearBtn, gbc);
+
+        // Enter key support
+        adminIdField.addActionListener(e -> clearBtn.doClick());
+        passwordField.addActionListener(e -> clearBtn.doClick());
+
+        clearBtn.addActionListener(e -> {
+            String adminId = adminIdField.getText().trim();
+            String password = new String(passwordField.getPassword());
+
+            if (adminId.isEmpty() || password.isEmpty()) {
+                UIManager.put("OptionPane.messageFont", labelFont);
+                JOptionPane.showMessageDialog(dialog, "Please enter both Admin ID and password.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Verify admin credentials against database
+            boolean authenticated = false;
+            for (Admin admin : DataStore.admins) {
+                if (admin.getAdminId().equalsIgnoreCase(adminId) && DataStore.checkPassword(password, admin.getPassword())) {
+                    authenticated = true;
+                    break;
+                }
+            }
+
+            if (!authenticated) {
+                UIManager.put("OptionPane.messageFont", labelFont);
+                JOptionPane.showMessageDialog(dialog, "Invalid Admin ID or Password!", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Double confirmation before proceeding
+            UIManager.put("OptionPane.messageFont", labelFont);
+            if (JOptionPane.showConfirmDialog(dialog,
+                "Are you sure you want to permanently delete ALL audit logs?\nThis action cannot be undone.",
+                "Final Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            DataStore.clearAuditLogs(adminId);
+            dialog.dispose();
+            refreshAllData();
+        });
+
+        dialog.setVisible(true);
     }
 }

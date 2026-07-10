@@ -244,8 +244,12 @@ public class RegistrationPage extends JFrame {
         }
 
         if (!isUpgradeMode) {
-            if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Invalid Email", JOptionPane.WARNING_MESSAGE);
+            if (email.length() > 254) {
+                JOptionPane.showMessageDialog(this, "Email address is too long (max 254 characters).", "Invalid Email", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!email.matches("^[A-Za-z0-9+_.-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$")) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid email address (e.g., user@example.com).", "Invalid Email", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 

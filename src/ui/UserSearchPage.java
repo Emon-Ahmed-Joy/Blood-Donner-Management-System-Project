@@ -136,6 +136,9 @@ public class UserSearchPage extends JFrame {
             // Skip self and blocked donors
             if (DataStore.currentUser != null && d.getEmail().equalsIgnoreCase(DataStore.currentUser.getEmail())) continue;
             if (d.isBlocked()) continue;
+            
+            // Check for eligibility
+            if (!DataStore.isEligible(d)) continue;
 
             int score = 0;
             boolean matchesBG = bg.isEmpty() || (d.getBloodGroup() != null && d.getBloodGroup().toLowerCase().equals(bg));
@@ -251,10 +254,7 @@ public class UserSearchPage extends JFrame {
         String[] urgencies = {"Normal", "Urgent", "Emergency"};
         JComboBox<String> urgencyF = new JComboBox<>(urgencies); urgencyF.setFont(fieldFont);
         
-        JTextArea conditionA = new JTextArea(4, 20);
-        conditionA.setLineWrap(true);
-        conditionA.setFont(fieldFont);
-        conditionA.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        JTextField conditionF = new JTextField(); conditionF.setFont(fieldFont);
 
         int r = 1;
         JLabel pLbl = new JLabel("Patient Name:"); pLbl.setFont(labelFont);
@@ -273,9 +273,9 @@ public class UserSearchPage extends JFrame {
         gbc.gridx = 0; gbc.gridy = r++; dialog.add(uLbl, gbc);
         gbc.gridx = 1; dialog.add(urgencyF, gbc);
 
-        JLabel cLbl = new JLabel("Condition:"); cLbl.setFont(labelFont);
+        JLabel cLbl = new JLabel("Medical Condition:"); cLbl.setFont(labelFont);
         gbc.gridx = 0; gbc.gridy = r++; dialog.add(cLbl, gbc);
-        gbc.gridx = 1; dialog.add(new JScrollPane(conditionA), gbc);
+        gbc.gridx = 1; dialog.add(conditionF, gbc);
 
         RoundedButton submitBtn = new RoundedButton("Send Emergency Request");
         submitBtn.setPreferredSize(new Dimension(250, 50));
@@ -286,7 +286,7 @@ public class UserSearchPage extends JFrame {
             String patient = patientF.getText().trim();
             String hospital = hospitalF.getText().trim();
             String location = locationF.getText().trim();
-            String condition = conditionA.getText().trim();
+            String condition = conditionF.getText().trim();
             String urgency = urgencyF.getSelectedItem().toString();
 
             if (patient.isEmpty() || hospital.isEmpty() || location.isEmpty() || condition.isEmpty()) {

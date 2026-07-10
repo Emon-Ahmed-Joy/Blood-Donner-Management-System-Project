@@ -13,6 +13,8 @@ public class User {
     private boolean isDonor;
     private boolean isBlocked;
     private boolean hasUpdate; // Notification flag
+    private boolean isDeleted;
+    private java.sql.Timestamp deletedAt;
 
     public User(String name, String email, String password, String state, String location, boolean isDonor) {
         this.name = name;
@@ -23,6 +25,8 @@ public class User {
         this.isDonor = isDonor;
         this.isBlocked = false;
         this.hasUpdate = false;
+        this.isDeleted = false;
+        this.deletedAt = null;
     }
 
     public String getName() { return name; }
@@ -33,14 +37,18 @@ public class User {
     public boolean isDonor() { return isDonor; }
     public boolean isBlocked() { return isBlocked; }
     public boolean hasUpdate() { return hasUpdate; }
+    public boolean isDeleted() { return isDeleted; }
+    public java.sql.Timestamp getDeletedAt() { return deletedAt; }
     
     public void setName(String name) { this.name = name; }
     public void setPassword(String password) { this.password = password; }
     public void setState(String state) { this.state = state; }
     public void setLocation(String location) { this.location = location; }
     public void setDonor(boolean donor) { isDonor = donor; }
-    public void setBlocked(boolean blocked) { isBlocked = blocked; }
+    public void setBlocked(boolean blocked) { this.isBlocked = blocked; }
     public void setHasUpdate(boolean hasUpdate) { this.hasUpdate = hasUpdate; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
+    public void setDeletedAt(java.sql.Timestamp deletedAt) { this.deletedAt = deletedAt; }
 
     @Override
     public boolean equals(Object o) {

@@ -166,6 +166,7 @@ public class LoginPage extends JFrame {
             if (admin.getAdminId().equalsIgnoreCase(id) && DataStore.checkPassword(password, admin.getPassword())) {
                 DataStore.currentAdminId = id;
                 DataStore.currentUser = null;
+                DataStore.cleanupDeletedUsers();
                 new AdminPage().setVisible(true);
                 this.dispose();
                 return;
